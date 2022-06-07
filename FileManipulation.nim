@@ -1,8 +1,9 @@
 import os
 import terminal
 import strutils
+import strformat
 
-var currentDir = getCurrentDir()
+var currentDir = getHomeDir()
 
 var directories : seq[string]
 var files : seq[string]
@@ -20,8 +21,16 @@ for kind, path in walkDir(currentDir):
   else:
     discard
 
-for dirPath in directories:
-  styledEcho fgGreen, styleBright, dirPath
+proc formatIndex(index:int): string =
+  return fmt"{index:03}"
 
-for filePath in files:
-  styledEcho fgBlue, filePath
+styledEcho bgGreen, fgBlack, "- Directories -"
+
+for index, dirPath in directories:
+  styledEcho fgGreen, styleBright, formatIndex(index + 1), " ", dirPath
+
+
+styledEcho bgBlue, fgWhite, "- Files -"
+
+for index, filePath in files:
+  styledEcho fgBlue, formatIndex(index + 1), " ", filePath
