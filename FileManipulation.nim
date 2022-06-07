@@ -1,6 +1,6 @@
 import os
 import terminal
-import sequtils
+import strutils
 
 var currentDir = getCurrentDir()
 
@@ -8,16 +8,20 @@ var directories : seq[string]
 var files : seq[string]
 
 for kind, path in walkDir(currentDir):
+  var filename = splitPath(path).tail
+  if filename.startsWith('.'):
+    continue
+
   case kind:
   of pcFile:
-    files.add(path)
+    files.add(filename)
   of pcDir:
-    directories.add(path)
+    directories.add(filename)
   else:
     discard
 
 for dirPath in directories:
-  styledEcho fgGreen, styleBright, "Dir:  ", dirPath
+  styledEcho fgGreen, styleBright, dirPath
 
 for filePath in files:
-  styledEcho fgBlue, "File: ", filePath
+  styledEcho fgBlue, filePath
