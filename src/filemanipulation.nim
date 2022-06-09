@@ -3,6 +3,7 @@ import terminal
 import strutils
 import strformat
 import fuzzy
+import unicode
 
 type
   Entries* = tuple[files, directories: seq[string]]
@@ -25,16 +26,32 @@ proc getDirectoryContent(directoryPath:string):Entries =
       discard
   return (files, directories)
 
-func filter*(entries:Entries, needle:string) : Entries =
+func containsLetters(text:string, lettersToSearch:string):bool =
+  let lowercaseText = toLower(text)
+  let lowercaseLettersToSearch = toLower(lettersToSearch)
+  if lowercaseLettersToSearch.len == 0:
+    return true
+
+  let letterToSearch = lowercaseLettersToSearch[0]
+  let index = find(lowercaseText, letterToSearch)
+  if index < 0:
+    return false
+  if lowercaseLettersToSearch.len > 1:
+    let remainingLetters = lowercaseLettersToSearch[1..^1]
+    let remainingText = lowercaseText[(index + 1)..^1]
+    return containsLetters(remainingText, remainingLetters)
+  return true
+
+func filter*(entries:Entries, lettersToSearch:string) : Entries =
   var filteredFiles : seq[string] = @[]
   var filteredDirectories : seq[string] = @[]
 
   for file in entries.files:
-    if file.contains(needle):
+    if containsLetters(file, lettersToSearch):
       filteredFiles.add(file)
 
   for directory in entries.directories:
-    if directory.contains(needle):
+    if containsLetters(directory, lettersToSearch):
       filteredDirectories.add(directory)
 
   return (filteredFiles, filteredDirectories)
