@@ -5,7 +5,7 @@ import strformat
 import fuzzy
 
 type
-  Entries = tuple[files, directories: seq[string]]
+  Entries* = tuple[files, directories: seq[string]]
 
 proc getDirectoryContent(directoryPath:string):Entries =
   var directories : seq[string]
@@ -25,8 +25,19 @@ proc getDirectoryContent(directoryPath:string):Entries =
       discard
   return (files, directories)
 
-func filter(entries:Entries) : Entries =
-  return entries
+func filter*(entries:Entries, needle:string) : Entries =
+  var filteredFiles : seq[string] = @[]
+  var filteredDirectories : seq[string] = @[]
+
+  for file in entries.files:
+    if file.contains(needle):
+      filteredFiles.add(file)
+
+  for directory in entries.directories:
+    if directory.contains(needle):
+      filteredDirectories.add(directory)
+
+  return (filteredFiles, filteredDirectories)
 
 func formatIndex*(index:int): string =
   return fmt"{index: 4}"
@@ -51,7 +62,7 @@ proc display(entries:Entries) =
 proc main() =
   let currentDir = getHomeDir()
   let entries = getDirectoryContent(currentDir)
-  let filteredEntries = filter(entries)
+  let filteredEntries = filter(entries, "o")
   display(filteredEntries)
 
 when isMainModule:

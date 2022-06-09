@@ -11,4 +11,4 @@ srcDir = "src"
 requires "nim >= 1.6.6"
 
 task test, "Run tests":
-  exec "nim r --run tests/tfiltering.nim"
+  exec "nim r --run tests/tfilemanipulation.nim"
