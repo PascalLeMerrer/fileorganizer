@@ -1,0 +1,4 @@
+nimcache/
+*.swp
+*.swo
+tests/*.out
