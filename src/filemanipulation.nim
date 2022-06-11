@@ -32,14 +32,16 @@ func containsLetters(text:string, lettersToSearch:string):bool =
   if lowercaseLettersToSearch.len == 0:
     return true
 
-  let letterToSearch = lowercaseLettersToSearch[0]
+  let letterToSearch = $runeAtPos(lowercaseLettersToSearch, 0)
   let index = find(lowercaseText, letterToSearch)
   if index < 0:
     return false
+
   if lowercaseLettersToSearch.len > 1:
-    let remainingLetters = lowercaseLettersToSearch[1..^1]
-    let remainingText = lowercaseText[(index + 1)..^1]
+    let remainingLetters = runeSubStr(lowercaseLettersToSearch, 1)
+    let remainingText = runeSubStr(lowercaseText, index + 1)
     return containsLetters(remainingText, remainingLetters)
+
   return true
 
 func filter*(entries:Entries, lettersToSearch:string) : Entries =
@@ -63,12 +65,7 @@ proc display(entries:Entries) =
   styledEcho bgGreen, fgBlack, "- Directories -"
 
   for index, dirPath in entries.directories:
-    let score = fuzzyMatchSmart("oo", dirPath)
-    let fgColor = if score > 0.5: fgGreen else: fgDefault
-
-    let formattedScore = fmt "{score}"
-    styledEcho fgColor, styleBright, formatIndex(index + 1), " ", dirPath, " : ", formattedScore
-
+    styledEcho formatIndex(index + 1), " ", dirPath
 
   styledEcho bgBlue, fgWhite, "- Files -"
 
@@ -79,7 +76,7 @@ proc display(entries:Entries) =
 proc main() =
   let currentDir = getHomeDir()
   let entries = getDirectoryContent(currentDir)
-  let filteredEntries = filter(entries, "o")
+  let filteredEntries = filter(entries, "è")
   display(filteredEntries)
 
 when isMainModule:

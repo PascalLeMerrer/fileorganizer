@@ -53,7 +53,7 @@ suite "filtering":
     let expected : Entries = (@["silky", "silently"], @["silly"])
     assert filter(entries, "SLY") == expected
 
-  test "search string not found returns empty results":
-    let entries : Entries = (@["silky", "selenium", "silently"], @["silence", "steel", "silly"])
-    let expected : Entries = (@[], @[])
-    assert filter(entries, "ABC") == expected
+  test "filtering support accentuated chars":
+    let entries : Entries = (@["Bibliothè̀que", "Movies", "Applications"], @["silence", "près", "dératisé"])
+    let expected : Entries = (@["Bibliothè̀que"], @["près"])
+    assert filter(entries, "è") == expected
