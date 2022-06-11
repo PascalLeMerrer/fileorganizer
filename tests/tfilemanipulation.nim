@@ -53,7 +53,14 @@ suite "filtering":
     let expected : Entries = (@["silky", "silently"], @["silly"])
     assert filter(entries, "SLY") == expected
 
-  test "filtering support accentuated chars":
-    let entries : Entries = (@["Bibliothè̀que", "Movies", "Applications"], @["silence", "près", "dératisé"])
+  test "filtering ignores diacritics in file names":
+    let entries : Entries = (@["Bibliothè̀que", "Applications"], @["Work", "près", "Hack"])
     let expected : Entries = (@["Bibliothè̀que"], @["près"])
-    assert filter(entries, "è") == expected
+    let actual = filter(entries, "e")
+    assert actual == expected, $actual
+
+  test "filtering ignores diacritics in search string":
+      let entries : Entries = (@["Bibliothè̀que", "Applications"], @["Work", "près", "Hack"])
+      let expected : Entries = (@["Applications"], @["Hack"])
+      let actual = filter(entries, "à")
+      assert actual == expected, $actual

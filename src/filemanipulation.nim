@@ -4,6 +4,7 @@ import strutils
 import strformat
 import fuzzy
 import unicode
+import unidecode
 
 type
   Entries* = tuple[files, directories: seq[string]]
@@ -44,17 +45,24 @@ func containsLetters(text:string, lettersToSearch:string):bool =
 
   return true
 
-func filter*(entries:Entries, lettersToSearch:string) : Entries =
+proc filter*(entries:Entries, lettersToSearch:string) : Entries =
   var filteredFiles : seq[string] = @[]
   var filteredDirectories : seq[string] = @[]
 
-  for file in entries.files:
-    if containsLetters(file, lettersToSearch):
-      filteredFiles.add(file)
+  # ignore diacritics; For example, é and è and transformed to e
+  let asciiLettersToSearch = unidecode(lettersToSearch)
 
-  for directory in entries.directories:
-    if containsLetters(directory, lettersToSearch):
-      filteredDirectories.add(directory)
+  for filename in entries.files:
+    let asciiFilename = unidecode(filename)
+    if containsLetters(asciiFilename, asciiLettersToSearch):
+      filteredFiles.add(filename)
+
+  for directoryName in entries.directories:
+    let asciiDirectoryName = unidecode(directoryName)
+    echo "asciiDirectoryName: ", asciiDirectoryName, " - asciiLettersToSearch: ", asciiLettersToSearch
+
+    if containsLetters(asciiDirectoryName, asciiLettersToSearch):
+      filteredDirectories.add(directoryName)
 
   return (filteredFiles, filteredDirectories)
 
