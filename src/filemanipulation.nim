@@ -10,6 +10,8 @@ import system
 type
   Entries* = tuple[files, directories: seq[string]]
 
+let rightColumnX = int(terminalWidth() / 2)
+
 proc getDirectoryContent(directoryPath:string):Entries =
   var directories : seq[string]
   var files : seq[string]
@@ -79,9 +81,13 @@ proc display(entries:Entries) =
   for index, filePath in entries.files:
     styledEcho fgBlue, formatIndex(index + 1), " ", filePath
 
+proc exit() =
+      stdout.eraseScreen()
+      echo "Good bye!\n"
+      exitprocs.addExitProc(resetAttributes)
+      system.quit()
 
 proc main() =
-  let rightColumnX = int(terminalWidth() / 2)
   stdout.eraseScreen()
   stdout.setCursorPos(0,0)
   let currentDir = getHomeDir()
@@ -96,13 +102,10 @@ proc main() =
     let command = terminal.getch()
     case command
     of 'q':
-      stdout.eraseScreen()
-      echo "Good bye!\n"
-      os.sleep(1000)
-      exitprocs.addExitProc(resetAttributes)
-      system.quit()
+      exit()
     else:
       discard
+
 
 when isMainModule:
 
