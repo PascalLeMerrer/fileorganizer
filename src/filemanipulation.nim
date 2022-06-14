@@ -1,10 +1,11 @@
 import os
-import terminal
-import strutils
 import strformat
-import fuzzy
+import strutils
+import std/terminal
 import unicode
 import unidecode
+import std/exitprocs
+import system
 
 type
   Entries* = tuple[files, directories: seq[string]]
@@ -59,8 +60,6 @@ proc filter*(entries:Entries, lettersToSearch:string) : Entries =
 
   for directoryName in entries.directories:
     let asciiDirectoryName = unidecode(directoryName)
-    echo "asciiDirectoryName: ", asciiDirectoryName, " - asciiLettersToSearch: ", asciiLettersToSearch
-
     if containsLetters(asciiDirectoryName, asciiLettersToSearch):
       filteredDirectories.add(directoryName)
 
@@ -82,10 +81,30 @@ proc display(entries:Entries) =
 
 
 proc main() =
+  let rightColumnX = int(terminalWidth() / 2)
+  stdout.eraseScreen()
+  stdout.setCursorPos(0,0)
   let currentDir = getHomeDir()
   let entries = getDirectoryContent(currentDir)
   let filteredEntries = filter(entries, "è")
   display(filteredEntries)
 
+  stdout.setCursorPos(rightColumnX,0)
+  echo "Destination"
+
+  while true:
+    let command = terminal.getch()
+    case command
+    of 'q':
+      stdout.eraseScreen()
+      echo "Good bye!\n"
+      os.sleep(1000)
+      exitprocs.addExitProc(resetAttributes)
+      system.quit()
+    else:
+      discard
+
 when isMainModule:
+
   main()
+
