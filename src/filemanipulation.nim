@@ -8,7 +8,13 @@ import std/exitprocs
 import system
 
 type
-  Entries* = tuple[files, directories: seq[string]]
+  Entry* = object
+    path*: string
+    name*: string
+    selected*: bool
+
+type
+  Entries* = tuple[files, directories: seq[Entry]]
 
 let rightColumnX = int(terminalWidth() / 2)
 
@@ -19,8 +25,8 @@ proc clearScreen() =
     stdout.setCursorPos(0,0)
 
 proc getDirectoryContent(directoryPath:string, includeFiles:bool=true):Entries =
-  var directories : seq[string]
-  var files : seq[string]
+  var directories : seq[Entry]
+  var files : seq[Entry]
 
   for kind, path in walkDir(directoryPath):
     let filename = splitPath(path).tail
@@ -29,16 +35,31 @@ proc getDirectoryContent(directoryPath:string, includeFiles:bool=true):Entries =
     case kind:
     of pcFile:
       if includeFiles:
-        files.add(filename)
+        let entry = Entry(
+          path: path,
+          name: filename,
+          selected: false
+        )
+        files.add(entry)
     of pcDir:
-      directories.add(filename)
+      let entry = Entry(
+        path: path,
+        name: filename,
+        selected: false
+      )
+      directories.add(entry)
     else:
       discard
   return (files, directories)
 
 # Returns the list of directories in the current one, plus the link to the parent (..)
-proc getSubDirectories(): seq[string] =
-  result = @[".."]
+proc getSubDirectories(): seq[Entry] =
+  let parentDirectory = Entry(
+        path: "..",
+        name: "..",
+        selected: false
+  )
+  result = @[parentDirectory]
   let subDirectories = getDirectoryContent(sourceDirectory, includeFiles=false).directories
   result.add(subDirectories)
 
@@ -61,21 +82,21 @@ func containsLetters(text:string, lettersToSearch:string):bool =
   return true
 
 proc filter*(entries:Entries, lettersToSearch:string) : Entries =
-  var filteredFiles : seq[string] = @[]
-  var filteredDirectories : seq[string] = @[]
+  var filteredFiles : seq[Entry] = @[]
+  var filteredDirectories : seq[Entry] = @[]
 
   # ignore diacritics; For example, é and è and transformed to e
   let asciiLettersToSearch = unidecode(lettersToSearch)
 
-  for filename in entries.files:
-    let asciiFilename = unidecode(filename)
+  for entry in entries.files:
+    let asciiFilename = unidecode(entry.name)
     if containsLetters(asciiFilename, asciiLettersToSearch):
-      filteredFiles.add(filename)
+      filteredFiles.add(entry)
 
-  for directoryName in entries.directories:
-    let asciiDirectoryName = unidecode(directoryName)
+  for entry in entries.directories:
+    let asciiDirectoryName = unidecode(entry.name)
     if containsLetters(asciiDirectoryName, asciiLettersToSearch):
-      filteredDirectories.add(directoryName)
+      filteredDirectories.add(entry)
 
   return (filteredFiles, filteredDirectories)
 
@@ -85,13 +106,13 @@ func formatIndex*(index:int): string =
 proc display(entries:Entries) =
   styledEcho bgGreen, fgBlack, "- Directories -"
 
-  for index, dirPath in entries.directories:
-    styledEcho formatIndex(index + 1), " ", dirPath
+  for index, entry in entries.directories:
+    styledEcho formatIndex(index + 1), " ", entry.name
 
   styledEcho bgBlue, fgWhite, "- Files -"
 
-  for index, filePath in entries.files:
-    styledEcho fgBlue, formatIndex(index + 1), " ", filePath
+  for index, entry in entries.files:
+    styledEcho fgBlue, formatIndex(index + 1), " ", entry.name
 
 proc exit() =
       stdout.eraseScreen()
