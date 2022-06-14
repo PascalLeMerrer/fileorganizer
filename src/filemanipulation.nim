@@ -12,7 +12,13 @@ type
 
 let rightColumnX = int(terminalWidth() / 2)
 
-proc getDirectoryContent(directoryPath:string):Entries =
+var sourceDirectory = getHomeDir()
+
+proc clearScreen() =
+    stdout.eraseScreen()
+    stdout.setCursorPos(0,0)
+
+proc getDirectoryContent(directoryPath:string, includeFiles:bool=true):Entries =
   var directories : seq[string]
   var files : seq[string]
 
@@ -20,15 +26,21 @@ proc getDirectoryContent(directoryPath:string):Entries =
     let filename = splitPath(path).tail
     if filename.startsWith('.'):
       continue
-
     case kind:
     of pcFile:
-      files.add(filename)
+      if includeFiles:
+        files.add(filename)
     of pcDir:
       directories.add(filename)
     else:
       discard
   return (files, directories)
+
+# Returns the list of directories in the current one, plus the link to the parent (..)
+proc getSubDirectories(): seq[string] =
+  result = @[".."]
+  let subDirectories = getDirectoryContent(sourceDirectory, includeFiles=false).directories
+  result.add(subDirectories)
 
 func containsLetters(text:string, lettersToSearch:string):bool =
   let lowercaseText = toLower(text)
@@ -87,11 +99,14 @@ proc exit() =
       exitprocs.addExitProc(resetAttributes)
       system.quit()
 
+proc selectSourceDirectory() =
+   clearScreen()
+   let directories = getSubDirectories()
+   display((@[], directories))
+
 proc main() =
-  stdout.eraseScreen()
-  stdout.setCursorPos(0,0)
-  let currentDir = getHomeDir()
-  let entries = getDirectoryContent(currentDir)
+  clearScreen()
+  let entries = getDirectoryContent(sourceDirectory)
   let filteredEntries = filter(entries, "è")
   display(filteredEntries)
 
@@ -101,8 +116,12 @@ proc main() =
   while true:
     let command = terminal.getch()
     case command
+
+    of 's':
+      selectSourceDirectory()
     of 'q':
       exit()
+
     else:
       discard
 
