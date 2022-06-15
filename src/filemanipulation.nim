@@ -16,7 +16,18 @@ type
 type
   Entries* = tuple[files, directories: seq[Entry]]
 
+type View = enum
+  Home, SourceSelection
+
 let rightColumnX = int(terminalWidth() / 2)
+
+type
+  State = object
+    view : View
+
+var state = State(
+    view: Home
+  )
 
 var sourceDirectory = getHomeDir()
 
@@ -121,9 +132,10 @@ proc exit() =
       system.quit()
 
 proc selectSourceDirectory() =
-   clearScreen()
-   let directories = getSubDirectories()
-   display((@[], directories))
+  state.view = SourceSelection
+  clearScreen()
+  let directories = getSubDirectories()
+  display((@[], directories))
 
 proc main() =
   clearScreen()
