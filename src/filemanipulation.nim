@@ -16,6 +16,25 @@ type
 proc select*(entry: var Entry) =
   entry.selected = true
 
+proc unselect*(entry: var Entry) =
+  entry.selected = false
+
+func selectNext*(entries: seq[Entry]): seq[Entry] =
+  result = @[]
+  var nextEntryIsToBeSelected = false
+  for entry in entries:
+    if entry.selected:
+      nextEntryIsToBeSelected = true
+      let newEntry = Entry(name:entry.name, path:entry.path, selected:false)
+      result.add(newEntry)
+    else:
+      if nextEntryIsToBeSelected:
+        nextEntryIsToBeSelected = false
+        let newEntry = Entry(name:entry.name, path:entry.path, selected:true)
+        result.add(newEntry)
+      else:
+        result.add(entry)
+
 type
   Entries* = tuple[files, directories: seq[Entry]]
 
@@ -33,6 +52,9 @@ var state = State(
   )
 
 var sourceDirectory = getHomeDir()
+
+let check = $Rune(0x2705)
+let rightArrow = $Rune(0x2794)
 
 proc clearScreen() =
     stdout.eraseScreen()
@@ -77,6 +99,7 @@ proc getSubDirectories(): seq[Entry] =
   result = @[parentDirectory]
   let subDirectories = getDirectoryContent(sourceDirectory, includeFiles=false).directories
   result.add(subDirectories)
+  result = selectNext(result)
 
 func containsLetters(text:string, lettersToSearch:string):bool =
   let lowercaseText = toLower(text)
@@ -115,19 +138,39 @@ proc filter*(entries:Entries, lettersToSearch:string) : Entries =
 
   return (filteredFiles, filteredDirectories)
 
-func formatIndex*(index:int): string =
-  return fmt"{index: 4}"
+# TODO rename
+proc formatIndex*(index:int, entry:Entry, width:int): string =
+  # formatting string cannot be defined dynamically
+  let strIndex = if entry.selected: rightArrow & $index else: " " & $index
+  case width
+  of 2:
+    return fmt("{strIndex:>2}")
+  of 3:
+    return fmt("{strIndex:>3}")
+  of 4:
+    return fmt("{strIndex:>4}")
+  of 5:
+    return fmt("{strIndex:>5}")
+  else:
+    return  $index
+
 
 proc display(entries:Entries) =
+
   styledEcho bgGreen, fgBlack, "- Directories -"
 
+  let directoriesCount = ($len(entries.directories)).len
   for index, entry in entries.directories:
-    styledEcho formatIndex(index + 1), " ", entry.name
+    if entry.selected:
+      styledEcho fgBlue, formatIndex(index + 1, entry, directoriesCount), " ", entry.name
+    else:
+      echo formatIndex(index + 1, entry, directoriesCount), " ", entry.name
 
-  styledEcho bgBlue, fgWhite, "- Files -"
+  styledEcho bgGreen, fgBlack, "- Files -"
 
+  let filesCount = ($len(entries.files)).len
   for index, entry in entries.files:
-    styledEcho fgBlue, formatIndex(index + 1), " ", entry.name
+    styledEcho fgBlue, formatIndex(index + 1, entry, filesCount), " ", entry.name
 
 proc exit() =
       stdout.eraseScreen()
@@ -158,12 +201,10 @@ proc main() =
       selectSourceDirectory()
     of 'q':
       exit()
-
     else:
-      discard
+      echo "'", int(command)  , "'"
 
 
 when isMainModule:
-
   main()
 
