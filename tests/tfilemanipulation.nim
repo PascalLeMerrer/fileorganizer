@@ -1,4 +1,4 @@
-from ../src/filemanipulation import formatIndex, filter, Entries, Entry
+from ../src/filemanipulation import formatIndex, filter, Entries, Entry, select
 
 import unittest
 
@@ -69,3 +69,10 @@ suite "filtering":
       let expected : Entries = (@[e("Applications")], @[e("Hack")])
       let actual = filter(entries, "à")
       assert actual == expected, $actual
+
+suite "Entry":
+  test "Entry may be selected":
+    var entry = e("A")
+    entry.select()
+    assert entry.selected
+

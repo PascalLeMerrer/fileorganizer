@@ -9,9 +9,12 @@ import system
 
 type
   Entry* = object
-    path*: string
     name*: string
+    path*: string
     selected*: bool
+
+proc select*(entry: var Entry) =
+  entry.selected = true
 
 type
   Entries* = tuple[files, directories: seq[Entry]]
@@ -65,11 +68,12 @@ proc getDirectoryContent(directoryPath:string, includeFiles:bool=true):Entries =
 
 # Returns the list of directories in the current one, plus the link to the parent (..)
 proc getSubDirectories(): seq[Entry] =
-  let parentDirectory = Entry(
+  var parentDirectory = Entry(
         path: "..",
         name: "..",
         selected: false
   )
+  select(parentDirectory)
   result = @[parentDirectory]
   let subDirectories = getDirectoryContent(sourceDirectory, includeFiles=false).directories
   result.add(subDirectories)
