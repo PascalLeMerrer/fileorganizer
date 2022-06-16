@@ -1,7 +1,7 @@
-from ../src/filemanipulation import formatIndex, filter, Entries, Entry, select, selectNext
-
 import std/strutils
-import unittest
+import std/unittest
+
+from ../modules/entry import Entry, Entries, filter, formatIndex, select, selectNext
 
 func e(filename: string, selected:bool=false): Entry =
   return Entry(name: filename,

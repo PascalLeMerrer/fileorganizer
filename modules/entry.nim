@@ -1,17 +1,20 @@
-import os
-import strformat
-import strutils
+import std/strformat
+import std/strutils
+import std/unicode
+import std/unidecode
 import std/terminal
-import unicode
-import unidecode
-import std/exitprocs
-import system
+
+const check = $Rune(0x2705)
+const rightArrow = $Rune(0x2794)
 
 type
   Entry* = object
     name*: string
     path*: string
     selected*: bool
+
+type
+  Entries* = tuple[files, directories: seq[Entry]]
 
 proc select*(entry: var Entry) =
   entry.selected = true
@@ -35,72 +38,6 @@ func selectNext*(entries: seq[Entry]): seq[Entry] =
       else:
         result.add(entry)
 
-type
-  Entries* = tuple[files, directories: seq[Entry]]
-
-type View = enum
-  Home, SourceSelection
-
-let rightColumnX = int(terminalWidth() / 2)
-
-type
-  State = object
-    view : View
-
-var state = State(
-    view: Home
-  )
-
-var sourceDirectory = getHomeDir()
-
-let check = $Rune(0x2705)
-let rightArrow = $Rune(0x2794)
-
-proc clearScreen() =
-    stdout.eraseScreen()
-    stdout.setCursorPos(0,0)
-
-proc getDirectoryContent(directoryPath:string, includeFiles:bool=true):Entries =
-  var directories : seq[Entry]
-  var files : seq[Entry]
-
-  for kind, path in walkDir(directoryPath):
-    let filename = splitPath(path).tail
-    if filename.startsWith('.'):
-      continue
-    case kind:
-    of pcFile:
-      if includeFiles:
-        let entry = Entry(
-          path: path,
-          name: filename,
-          selected: false
-        )
-        files.add(entry)
-    of pcDir:
-      let entry = Entry(
-        path: path,
-        name: filename,
-        selected: false
-      )
-      directories.add(entry)
-    else:
-      discard
-  return (files, directories)
-
-# Returns the list of directories in the current one, plus the link to the parent (..)
-proc getSubDirectories(): seq[Entry] =
-  var parentDirectory = Entry(
-        path: "..",
-        name: "..",
-        selected: false
-  )
-  select(parentDirectory)
-  result = @[parentDirectory]
-  let subDirectories = getDirectoryContent(sourceDirectory, includeFiles=false).directories
-  result.add(subDirectories)
-  result = selectNext(result)
-
 func containsLetters(text:string, lettersToSearch:string):bool =
   let lowercaseText = toLower(text)
   let lowercaseLettersToSearch = toLower(lettersToSearch)
@@ -108,7 +45,7 @@ func containsLetters(text:string, lettersToSearch:string):bool =
     return true
 
   let letterToSearch = $runeAtPos(lowercaseLettersToSearch, 0)
-  let index = find(lowercaseText, letterToSearch)
+  let index = strutils.find(lowercaseText, letterToSearch)
   if index < 0:
     return false
 
@@ -155,7 +92,7 @@ proc formatIndex*(index:int, entry:Entry, width:int): string =
     return  $index
 
 
-proc display(entries:Entries) =
+proc render*(entries:Entries) =
 
   styledEcho bgGreen, fgBlack, "- Directories -"
 
@@ -171,40 +108,3 @@ proc display(entries:Entries) =
   let filesCount = ($len(entries.files)).len
   for index, entry in entries.files:
     styledEcho fgBlue, formatIndex(index + 1, entry, filesCount), " ", entry.name
-
-proc exit() =
-      stdout.eraseScreen()
-      echo "Good bye!\n"
-      exitprocs.addExitProc(resetAttributes)
-      system.quit()
-
-proc selectSourceDirectory() =
-  state.view = SourceSelection
-  clearScreen()
-  let directories = getSubDirectories()
-  display((@[], directories))
-
-proc main() =
-  clearScreen()
-  let entries = getDirectoryContent(sourceDirectory)
-  let filteredEntries = filter(entries, "è")
-  display(filteredEntries)
-
-  stdout.setCursorPos(rightColumnX,0)
-  echo "Destination"
-
-  while true:
-    let command = terminal.getch()
-    case command
-
-    of 's':
-      selectSourceDirectory()
-    of 'q':
-      exit()
-    else:
-      echo "'", int(command)  , "'"
-
-
-when isMainModule:
-  main()
-
