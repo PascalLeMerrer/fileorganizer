@@ -2,7 +2,7 @@ import std/strformat
 import std/strutils
 import std/unicode
 import std/unidecode
-import std/terminal
+import illwill
 
 const check = $Rune(0x2705)
 const rightArrow = $Rune(0x2794)
@@ -92,19 +92,32 @@ proc formatIndex*(index:int, entry:Entry, width:int): string =
     return  $index
 
 
-proc render*(entries:Entries) =
+proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
 
-  styledEcho bgGreen, fgBlack, "- Directories -"
-
+  var y  = 4
+  tb.setBackgroundColor(BackgroundColor.bgGreen)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+  tb.write(x, y, "- Directories -")
   let directoriesCount = ($len(entries.directories)).len
   for index, entry in entries.directories:
+    y = y + 1
     if entry.selected:
-      styledEcho fgBlue, formatIndex(index + 1, entry, directoriesCount), " ", entry.name
+      tb.setBackgroundColor(BackgroundColor.bgBlack)
+      tb.setForegroundColor(ForegroundColor.fgBlue, bright=true)
     else:
-      echo formatIndex(index + 1, entry, directoriesCount), " ", entry.name
+      tb.resetAttributes()
+    let line = formatIndex(index + 1, entry, directoriesCount) & " " & entry.name
+    tb.write(x, y, line)
 
-  styledEcho bgGreen, fgBlack, "- Files -"
+  tb.setBackgroundColor(BackgroundColor.bgGreen)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
 
+  y = y + 1
+  tb.write(x, y, "- Files -")
+  tb.resetAttributes()
+  
   let filesCount = ($len(entries.files)).len
   for index, entry in entries.files:
-    styledEcho fgBlue, formatIndex(index + 1, entry, filesCount), " ", entry.name
+    y = y + 1
+    let line = formatIndex(index + 1, entry, filesCount) & " " & entry.name
+    tb.write(x, y, line)

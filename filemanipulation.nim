@@ -1,18 +1,17 @@
-import std/os
-import std/terminal
-import std/exitprocs
+import illwill
+import std/[exitprocs, os, strformat, strutils]
 import system
-
 import modules/[entry, file]
 
 type View = enum
   Home, SourceSelection
 
-let rightColumnX = int(terminalWidth() / 2)
 
 type
   State = object
     view : View
+    sourceDirectories : seq[Entry]
+    filteredEntries: Entries
 
 var state = State(
     view: Home
@@ -20,46 +19,66 @@ var state = State(
 
 var sourceDirectory = getHomeDir()
 
-
-proc clearScreen() =
-    stdout.eraseScreen()
-    stdout.setCursorPos(0,0)
-
-
-
-proc exit() =
-      stdout.eraseScreen()
-      echo "Good bye!\n"
-      exitprocs.addExitProc(resetAttributes)
-      system.quit()
-
-proc selectSourceDirectory() =
+proc selectSourceDirectory(): seq[Entry] =
   state.view = SourceSelection
-  clearScreen()
-  let directories = getSubDirectories(sourceDirectory)
-  entry.render((@[], directories))
+  return getSubDirectories(sourceDirectory)
 
+
+proc exitProc() {.noconv.} =
+  illwillDeinit()
+  showCursor()
+  quit(0)
+
+proc init() =
+  illwillInit(fullscreen=true)
+  setControlCHook(exitProc)
+  hideCursor()
+  let entries = getDirectoryContent(sourceDirectory)
+  state.filteredEntries = filter(entries, "è")
+
+proc update() =
+  var key = getKey()
+  case key
+  of Key.Escape, Key.Q:
+    exitProc()
+  of Key.S:
+    state.view = SourceSelection
+    state.sourceDirectories = selectSourceDirectory()
+  else:
+    discard
+
+proc render() =
+  var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
+  let rightColumnX = int(terminalWidth() / 2)
+
+  tb.setForegroundColor(ForegroundColor.fgYellow)
+  tb.drawRect(0, 0, tb.width-1, tb.height-1)
+
+  tb.setBackgroundColor(BackgroundColor.bgWhite)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+  tb.write(1, 1, "Source")
+  tb.write(rightColumnX, 1, "Destination")
+
+  tb.resetAttributes()
+  case state.view
+  of Home:
+    entry.render(state.filteredEntries, tb, 1)
+  of SourceSelection:
+    entry.render((@[], state.sourceDirectories), tb, 1)
+
+  tb.write(1, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
+
+  tb.display()
 
 proc main() =
-
-  clearScreen()
-  let entries = getDirectoryContent(sourceDirectory)
-  let filteredEntries = filter(entries, "è")
-  entry.render(filteredEntries)
-
-  stdout.setCursorPos(rightColumnX,0)
-  echo "Destination"
-
+  init()
   while true:
-    let command = terminal.getch()
-    case command
+    update()
+    render()
+    sleep(20)
 
-    of 's':
-      selectSourceDirectory()
-    of 'q':
-      exit()
-    else:
-      echo "'", int(command)  , "'"
+main()
+
 
 
 when isMainModule:
