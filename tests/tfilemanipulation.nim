@@ -11,12 +11,12 @@ func e(filename: string, selected:bool=false): Entry =
 
 suite "formatting":
   test "format index takes in account the max len":
-    check(formatIndex(4, e("a"), 1)  == "4")
-    check(formatIndex(42, e("a"), 2)  == "42")
-    check(formatIndex(42, e("a"), 3)  == " 42")
-    check(formatIndex(42, e("a"), 4)  == "  42")
-    check(formatIndex(42, e("a"), 5)  == "   42")
-    check(formatIndex(123456, e("a"), 6)  == "123456")
+    check(formatIndex(4, 1)  == "4")
+    check(formatIndex(42, 2)  == "42")
+    check(formatIndex(42, 3)  == " 42")
+    check(formatIndex(42, 4)  == "  42")
+    check(formatIndex(42, 5)  == "   42")
+    check(formatIndex(123456, 6)  == "123456")
 
 suite "filtering":
   test "Files with searched character must pass through filter":

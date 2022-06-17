@@ -75,22 +75,26 @@ proc filter*(entries:Entries, lettersToSearch:string) : Entries =
 
   return (filteredFiles, filteredDirectories)
 
-# TODO rename
-proc formatIndex*(index:int, entry:Entry, width:int): string =
+
+func formatIndex*(index:int, width:int): string =
   # formatting string cannot be defined dynamically
-  let strIndex = if entry.selected: rightArrow & $index else: " " & $index
+
   case width
   of 2:
-    return fmt("{strIndex:>2}")
+    return fmt("{index:>2}")
   of 3:
-    return fmt("{strIndex:>3}")
+    return fmt("{index:>3}")
   of 4:
-    return fmt("{strIndex:>4}")
+    return fmt("{index:>4}")
   of 5:
-    return fmt("{strIndex:>5}")
+    return fmt("{index:>5}")
   else:
     return  $index
 
+proc addPrefix(index:int, entry:Entry, width:int, ): string =
+  # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
+  let formattedIndex = formatIndex(index, width)
+  result = if entry.selected: rightArrow & $formattedIndex else: " " & $formattedIndex
 
 proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
 
@@ -98,7 +102,7 @@ proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   tb.write(x, y, "- Directories -")
-  let directoriesCount = ($len(entries.directories)).len
+  let maxDigitsForDirectoryIndex = ($len(entries.directories)).len
   for index, entry in entries.directories:
     y = y + 1
     if entry.selected:
@@ -106,7 +110,7 @@ proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
       tb.setForegroundColor(ForegroundColor.fgBlue, bright=true)
     else:
       tb.resetAttributes()
-    let line = formatIndex(index + 1, entry, directoriesCount) & " " & entry.name
+    let line = addPrefix(index + 1, entry, maxDigitsForDirectoryIndex) & " " & entry.name
     tb.write(x, y, line)
 
   tb.setBackgroundColor(BackgroundColor.bgGreen)
@@ -115,9 +119,9 @@ proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
   y = y + 1
   tb.write(x, y, "- Files -")
   tb.resetAttributes()
-  
-  let filesCount = ($len(entries.files)).len
+
+  let maxDigitsForFileIndex = ($len(entries.files)).len
   for index, entry in entries.files:
     y = y + 1
-    let line = formatIndex(index + 1, entry, filesCount) & " " & entry.name
+    let line = addPrefix(index + 1, entry, maxDigitsForFileIndex) & " " & entry.name
     tb.write(x, y, line)
