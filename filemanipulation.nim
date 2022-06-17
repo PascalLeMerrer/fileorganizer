@@ -39,7 +39,12 @@ proc init() =
 proc update() =
   var key = getKey()
   case key
-  of Key.Escape, Key.Q:
+  of Key.Escape:
+    if state.view == Home:
+      exitProc()
+    else:
+      state.view = Home
+  of Key.Q:
     exitProc()
   of Key.S:
     state.view = SourceSelection

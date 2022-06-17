@@ -86,4 +86,3 @@ suite "Entry selection":
     let entries : seq[Entry] = @[e("aaa"), e("bbb", selected=true), e("ccc"), e("eee")]
     let expected : seq[Entry] = @[e("aaa"), e("bbb"), e("ccc", selected=true), e("eee")]
     check(selectNext(entries) == expected)
-
