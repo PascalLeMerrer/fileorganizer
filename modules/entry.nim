@@ -3,7 +3,6 @@ import std/strutils
 import std/unicode
 import std/unidecode
 import illwill
-import unittest
 
 const check = $Rune(0x2705)
 const rightArrow = $Rune(0x2794)
@@ -17,34 +16,33 @@ type
 type
   Entries* = tuple[files, directories: seq[Entry]]
 
-proc select*(entry: var Entry) =
-  entry.selected = true
+func select*(entry: Entry): Entry =
+  return Entry(name:entry.name, path:entry.path, selected:true)
 
-proc unselect*(entry: var Entry) =
-  entry.selected = false
+func unselect*(entry: Entry): Entry =
+  return Entry(name:entry.name, path:entry.path, selected:false)
 
 proc selectNext*(entries: seq[Entry]): seq[Entry] =
   result = @[]
   var shouldSelectNextEntry = false
   var shouldSelectFirstEntry = false
-  let lastIndex = entries.len - 1 
+  let lastIndex = entries.len - 1
   for index, entry in entries:
     if entry.selected:
       shouldSelectNextEntry = true
       shouldSelectFirstEntry = index == lastIndex
-      let newEntry = Entry(name:entry.name, path:entry.path, selected:false)
+      let newEntry = unselect(entry)
       result.add(newEntry)
     else:
       if shouldSelectNextEntry:
         shouldSelectNextEntry = false
-        let newEntry = Entry(name:entry.name, path:entry.path, selected:true)
+        let newEntry = select(entry)
         result.add(newEntry)
       else:
         result.add(entry)
   if shouldSelectFirstEntry:
     let firstEntry = result[0]
-    # let newEntry = Entry(name:firstEntry.name, path:firstEntry.path, selected:true)
-    let newEntry = Entry(name:firstEntry.name, path:firstEntry.path, selected:true)
+    let newEntry = select(firstEntry)
     result[0] = newEntry
 
 

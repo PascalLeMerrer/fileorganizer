@@ -1,5 +1,5 @@
 import illwill
-import std/[exitprocs, os, strformat, strutils]
+import std/os
 import system
 import modules/[entry, file]
 
@@ -9,20 +9,16 @@ type View = enum
 
 type
   State = object
-    view : View
-    sourceDirectories : seq[Entry]
-    filteredEntries: Entries
+    filteredEntries: Entries # the file and directories in the current source dir matching the current filter
+    sourceSubDirectories : seq[Entry] # the directories into the current source directory
+    view : View # the visible screen
+    sourceDirectoryPath:string
+
 
 var state = State(
-    view: Home
+    view: Home,
+    sourceDirectoryPath: getHomeDir()
   )
-
-var sourceDirectory = getHomeDir()
-
-proc selectSourceDirectory(): seq[Entry] =
-  state.view = SourceSelection
-  return getSubDirectories(sourceDirectory)
-
 
 proc exitProc() {.noconv.} =
   illwillDeinit()
@@ -33,7 +29,7 @@ proc init() =
   illwillInit(fullscreen=true)
   setControlCHook(exitProc)
   hideCursor()
-  let entries = getDirectoryContent(sourceDirectory)
+  let entries = file.getDirectoryContent(state.sourceDirectoryPath)
   state.filteredEntries = filter(entries, "è")
 
 proc update() =
@@ -42,9 +38,14 @@ proc update() =
   of Key.Down:
     case state.view
     of SourceSelection:
-      state.sourceDirectories = entry.selectNext(state.sourceDirectories)
+      state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
     else:
       discard
+  of Key.Enter:
+    state.view = Home
+    state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceSubDirectories)
+    let entries = file.getDirectoryContent(state.sourceDirectoryPath) # factorize
+    state.filteredEntries = filter(entries, "è")
   of Key.Escape:
     if state.view == Home:
       exitProc()
@@ -54,7 +55,7 @@ proc update() =
     exitProc()
   of Key.S:
     state.view = SourceSelection
-    state.sourceDirectories = selectSourceDirectory()
+    state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
   else:
     discard
 
@@ -75,7 +76,7 @@ proc render() =
   of Home:
     entry.render(state.filteredEntries, tb, 1)
   of SourceSelection:
-    entry.render((@[], state.sourceDirectories), tb, 1)
+    entry.render((@[], state.sourceSubDirectories), tb, 1)
 
   tb.write(1, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 

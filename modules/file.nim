@@ -35,10 +35,11 @@ proc getSubDirectories*(directoryPath:string): seq[Entry] =
   var parentDirectory = Entry(
         path: "..",
         name: "..",
-        selected: false
+        selected: true
   )
-  select(parentDirectory)
   result = @[parentDirectory]
   let subDirectories = getDirectoryContent(directoryPath, includeFiles=false).directories
   result.add(subDirectories)
-  result = selectNext(result)
+
+proc getSelectedDirectoryPath*(directories: seq[Entry]): string =
+  return ""
