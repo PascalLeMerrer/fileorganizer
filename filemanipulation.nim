@@ -39,6 +39,12 @@ proc init() =
 proc update() =
   var key = getKey()
   case key
+  of Key.Down:
+    case state.view
+    of SourceSelection:
+      state.sourceDirectories = entry.selectNext(state.sourceDirectories)
+    else:
+      discard
   of Key.Escape:
     if state.view == Home:
       exitProc()

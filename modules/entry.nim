@@ -3,6 +3,7 @@ import std/strutils
 import std/unicode
 import std/unidecode
 import illwill
+import unittest
 
 const check = $Rune(0x2705)
 const rightArrow = $Rune(0x2794)
@@ -22,21 +23,31 @@ proc select*(entry: var Entry) =
 proc unselect*(entry: var Entry) =
   entry.selected = false
 
-func selectNext*(entries: seq[Entry]): seq[Entry] =
+proc selectNext*(entries: seq[Entry]): seq[Entry] =
   result = @[]
-  var nextEntryIsToBeSelected = false
-  for entry in entries:
+  var shouldSelectNextEntry = false
+  var shouldSelectFirstEntry = false
+  let lastIndex = entries.len - 1 
+  for index, entry in entries:
     if entry.selected:
-      nextEntryIsToBeSelected = true
+      shouldSelectNextEntry = true
+      shouldSelectFirstEntry = index == lastIndex
       let newEntry = Entry(name:entry.name, path:entry.path, selected:false)
       result.add(newEntry)
     else:
-      if nextEntryIsToBeSelected:
-        nextEntryIsToBeSelected = false
+      if shouldSelectNextEntry:
+        shouldSelectNextEntry = false
         let newEntry = Entry(name:entry.name, path:entry.path, selected:true)
         result.add(newEntry)
       else:
         result.add(entry)
+  if shouldSelectFirstEntry:
+    let firstEntry = result[0]
+    # let newEntry = Entry(name:firstEntry.name, path:firstEntry.path, selected:true)
+    let newEntry = Entry(name:firstEntry.name, path:firstEntry.path, selected:true)
+    result[0] = newEntry
+
+
 
 func containsLetters(text:string, lettersToSearch:string):bool =
   let lowercaseText = toLower(text)
