@@ -7,3 +7,12 @@ suite "getSelectedDirectoryPath":
       ]
     let actualPath = file.getSelectedDirectoryPath("/root", subDirectories)
     check(actualPath == "/root/subdir2")
+
+  test "returns the parent to the parent dir when .. is selected":
+    let subDirectories: seq[Entry] = @[
+        e(path="/root/dir1/../", filename="..", selected=true),
+        e(path="/root/dir1/subdir1", filename="subdir1"),
+        e(path="/root/dir1/subdir2", filename="subdir2")
+      ]
+    let actualPath = file.getSelectedDirectoryPath("/root/dir1", subDirectories)
+    check(actualPath == "/root")

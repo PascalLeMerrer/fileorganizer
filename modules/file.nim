@@ -44,5 +44,11 @@ proc getSubDirectories*(directoryPath:string): seq[Entry] =
 proc getSelectedDirectoryPath*(currentDirectoryPath:string, subDirectories: seq[Entry]): string =
   for entry in subDirectories:
     if entry.selected:
-      return entry.path
+      case entry.name
+      of ParDir:
+         let (parent, current) = splitPath(currentDirectoryPath)
+         return parent
+      else:
+        return entry.path
+
   return ""
