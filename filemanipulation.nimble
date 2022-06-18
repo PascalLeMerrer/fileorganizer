@@ -12,5 +12,5 @@ requires "nim >= 1.6.6"
 requires "illwill == 0.3.0"
 
 task test, "Run tests":
-  exec "nim r --run tests/tfile.nim"
+  exec "nim r --run tests/tfilemanipulation.nim"
   # exec "nim c --debuginfo --linedir:on --run tests/tfilemanipulation.nim"

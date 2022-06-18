@@ -1,14 +1,3 @@
-import std/unittest
-
-from ../modules/entry import Entry
-import ../modules/file
-
-func e(filename: string, path: string, selected:bool=false): Entry =
-  return Entry(name: filename,
-               path: path,
-               selected: selected
-  )
-
 suite "getSelectedDirectoryPath":
   test "concatenates the parent dir path with the selected subdirectory name":
     let subDirectories: seq[Entry] = @[
