@@ -13,7 +13,6 @@ type
     view : View # the visible screen
     sourceDirectoryPath:string
 
-
 var state = State(
     view: Home,
     sourceDirectoryPath: getHomeDir()
@@ -95,8 +94,6 @@ proc main() =
     sleep(20)
 
 main()
-
-
 
 when isMainModule:
   main()
