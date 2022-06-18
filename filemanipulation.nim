@@ -9,9 +9,9 @@ type View = enum
 type
   State = object
     filteredEntries: Entries # the file and directories in the current source dir matching the current filter
-    sourceSubDirectories : seq[Entry] # the directories into the current source directory
-    view : View # the visible screen
-    sourceDirectoryPath:string
+    sourceSubDirectories: seq[Entry] # the directories into the current source directory
+    view: View # the visible screen
+    sourceDirectoryPath: string
 
 var state = State(
     view: Home,
@@ -24,7 +24,7 @@ proc exitProc() {.noconv.} =
   quit(0)
 
 proc init() =
-  illwillInit(fullscreen=true)
+  illwillInit(fullscreen = true)
   setControlCHook(exitProc)
   hideCursor()
   let entries = file.getDirectoryContent(state.sourceDirectoryPath)
@@ -42,12 +42,14 @@ proc update() =
   of Key.Up:
     case state.view
     of SourceSelection:
-      state.sourceSubDirectories = entry.selectPrevious(state.sourceSubDirectories)
+      state.sourceSubDirectories = entry.selectPrevious(
+          state.sourceSubDirectories)
     else:
       discard
   of Key.Enter:
     state.view = Home
-    state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceDirectoryPath  ,state.sourceSubDirectories)
+    state.sourceDirectoryPath = file.getSelectedDirectoryPath(
+        state.sourceDirectoryPath, state.sourceSubDirectories)
     let entries = file.getDirectoryContent(state.sourceDirectoryPath) # factorize
     state.filteredEntries = filter(entries, "è")
   of Key.Escape:
@@ -59,7 +61,8 @@ proc update() =
     exitProc()
   of Key.S:
     state.view = SourceSelection
-    state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
+    state.sourceSubDirectories = file.getSubDirectories(
+        state.sourceDirectoryPath)
   else:
     discard
 

@@ -17,10 +17,10 @@ type
   Entries* = tuple[files, directories: seq[Entry]]
 
 func select*(entry: Entry): Entry =
-  return Entry(name:entry.name, path:entry.path, selected:true)
+  return Entry(name: entry.name, path: entry.path, selected: true)
 
 func unselect*(entry: Entry): Entry =
-  return Entry(name:entry.name, path:entry.path, selected:false)
+  return Entry(name: entry.name, path: entry.path, selected: false)
 
 proc selectNext*(entries: seq[Entry]): seq[Entry] =
   result = @[]
@@ -46,14 +46,14 @@ proc selectNext*(entries: seq[Entry]): seq[Entry] =
     result[0] = newEntry
 
 
-func reverse*(entries:seq[Entry]): seq[Entry] =
+func reverse*(entries: seq[Entry]): seq[Entry] =
   for i in countdown(entries.len - 1, 0):
     result.add(entries[i])
 
 proc selectPrevious*(entries: seq[Entry]): seq[Entry] =
   reverse(selectNext(reverse(entries)))
 
-func containsLetters(text:string, lettersToSearch:string):bool =
+func containsLetters(text: string, lettersToSearch: string): bool =
   let lowercaseText = toLower(text)
   let lowercaseLettersToSearch = toLower(lettersToSearch)
   if lowercaseLettersToSearch.len == 0:
@@ -71,9 +71,9 @@ func containsLetters(text:string, lettersToSearch:string):bool =
 
   return true
 
-proc filter*(entries:Entries, lettersToSearch:string) : Entries =
-  var filteredFiles : seq[Entry] = @[]
-  var filteredDirectories : seq[Entry] = @[]
+proc filter*(entries: Entries, lettersToSearch: string): Entries =
+  var filteredFiles: seq[Entry] = @[]
+  var filteredDirectories: seq[Entry] = @[]
 
   # ignore diacritics; For example, é and è and transformed to e
   let asciiLettersToSearch = unidecode(lettersToSearch)
@@ -91,7 +91,7 @@ proc filter*(entries:Entries, lettersToSearch:string) : Entries =
   return (filteredFiles, filteredDirectories)
 
 
-func formatIndex*(index:int, width:int): string =
+func formatIndex*(index: int, width: int): string =
   # formatting string cannot be defined dynamically
 
   case width
@@ -104,16 +104,16 @@ func formatIndex*(index:int, width:int): string =
   of 5:
     return fmt("{index:>5}")
   else:
-    return  $index
+    return $index
 
-proc addPrefix(index:int, entry:Entry, width:int, ): string =
+proc addPrefix(index: int, entry: Entry, width: int, ): string =
   # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
   let formattedIndex = formatIndex(index, width)
   result = if entry.selected: rightArrow & $formattedIndex else: " " & $formattedIndex
 
-proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
+proc render*(entries: Entries, tb: var TerminalBuffer, x: int) =
 
-  var y  = 4
+  var y = 4
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   tb.write(x, y, "- Directories -")
@@ -122,7 +122,7 @@ proc render*(entries:Entries, tb: var TerminalBuffer, x: int) =
     y = y + 1
     if entry.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
-      tb.setForegroundColor(ForegroundColor.fgBlue, bright=true)
+      tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
     else:
       tb.resetAttributes()
     let line = addPrefix(index + 1, entry, maxDigitsForDirectoryIndex) & " " & entry.name
