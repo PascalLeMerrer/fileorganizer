@@ -6,7 +6,6 @@ import modules/[entry, file]
 type View = enum
   Home, SourceSelection
 
-
 type
   State = object
     filteredEntries: Entries # the file and directories in the current source dir matching the current filter
@@ -43,7 +42,7 @@ proc update() =
       discard
   of Key.Enter:
     state.view = Home
-    state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceSubDirectories)
+    state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceDirectoryPath  ,state.sourceSubDirectories)
     let entries = file.getDirectoryContent(state.sourceDirectoryPath) # factorize
     state.filteredEntries = filter(entries, "è")
   of Key.Escape:

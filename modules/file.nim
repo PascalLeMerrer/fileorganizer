@@ -41,5 +41,8 @@ proc getSubDirectories*(directoryPath:string): seq[Entry] =
   let subDirectories = getDirectoryContent(directoryPath, includeFiles=false).directories
   result.add(subDirectories)
 
-proc getSelectedDirectoryPath*(directories: seq[Entry]): string =
+proc getSelectedDirectoryPath*(currentDirectoryPath:string, subDirectories: seq[Entry]): string =
+  for entry in subDirectories:
+    if entry.selected:
+      return entry.path
   return ""

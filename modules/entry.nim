@@ -4,7 +4,7 @@ import std/unicode
 import std/unidecode
 import illwill
 
-const check = $Rune(0x2705)
+const checkSymbol = $Rune(0x2705)
 const rightArrow = $Rune(0x2794)
 
 type

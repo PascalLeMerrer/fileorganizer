@@ -79,8 +79,8 @@ suite "filtering":
 suite "Entry selection":
   test "Entry may be selected":
     var entry = e("A")
-    entry.select()
-    check(entry.selected)
+    let actual = select(entry)
+    check(actual.selected)
 
   test "Next entry in a sequence may be selected":
     let entries : seq[Entry] = @[e("aaa"), e("bbb", selected=true), e("ccc"), e("eee")]
