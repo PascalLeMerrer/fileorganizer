@@ -40,6 +40,12 @@ proc update() =
       state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
     else:
       discard
+  of Key.Up:
+    case state.view
+    of SourceSelection:
+      state.sourceSubDirectories = entry.selectPrevious(state.sourceSubDirectories)
+    else:
+      discard
   of Key.Enter:
     state.view = Home
     state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceDirectoryPath  ,state.sourceSubDirectories)

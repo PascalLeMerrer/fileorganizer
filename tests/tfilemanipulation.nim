@@ -1,7 +1,7 @@
 import std/strutils
 import std/unittest
 
-from ../modules/entry import Entry, Entries, filter, formatIndex, select, selectNext
+from ../modules/entry import Entry, Entries, filter, formatIndex
 import ../modules/file
 
 func e(filename: string, path:string="", selected:bool=false): Entry =
@@ -10,7 +10,7 @@ func e(filename: string, path:string="", selected:bool=false): Entry =
                selected: selected
   )
 
-include tentryselection
+include tentry
 include tfile
 include tfiltering
 include tformatting

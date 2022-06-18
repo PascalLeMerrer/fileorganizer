@@ -46,6 +46,12 @@ proc selectNext*(entries: seq[Entry]): seq[Entry] =
     result[0] = newEntry
 
 
+func reverse*(entries:seq[Entry]): seq[Entry] =
+  for i in countdown(entries.len - 1, 0):
+    result.add(entries[i])
+
+proc selectPrevious*(entries: seq[Entry]): seq[Entry] =
+  reverse(selectNext(reverse(entries)))
 
 func containsLetters(text:string, lettersToSearch:string):bool =
   let lowercaseText = toLower(text)
