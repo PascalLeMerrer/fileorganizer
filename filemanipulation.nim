@@ -69,27 +69,27 @@ proc update() =
 
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-  let rightColumnX = int(terminalWidth() / 2)
 
+  let rightColumnX = int(terminalWidth() / 2)
+  tb.fill(0,0, terminalWidth() - 1, terminalHeight() - 1, " ")
   tb.setForegroundColor(ForegroundColor.fgYellow)
   tb.drawRect(0, 0, tb.width-1, tb.height-1)
 
   tb.setBackgroundColor(BackgroundColor.bgWhite)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(2, 1, " Source ")
   tb.write(rightColumnX, 1, " Destination ")
 
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(2, 4, " Directories ")
-  var nextY = entry.render(state.sourceSubDirectories, tb, 2,5)
+  tb.write(2, 1, " Source directory ")
+  var nextY = entry.renderDirectory(state.sourceSubDirectories, tb, 2, 2)
 
   inc nextY
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   tb.write(2, nextY, " Files ")
   inc nextY
-  discard entry.render(state.filteredFiles, tb, 2, nextY)
+  discard entry.renderFile(state.filteredFiles, tb, 2, nextY)
 
   tb.resetAttributes()
   tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")

@@ -6,6 +6,7 @@ import illwill
 
 const checkSymbol = $Rune(0x2705)
 const rightArrow = $Rune(0x2794)
+const folder = $Rune(0x1F4C1)
 
 type
   Entry* = object
@@ -95,12 +96,12 @@ func formatIndex*(index: int, width: int): string =
   else:
     return $index
 
-proc addPrefix(index: int, entry: Entry, width: int, ): string =
-  # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
-  let formattedIndex = formatIndex(index, width)
-  result = if entry.selected: rightArrow & $formattedIndex else: " " & $formattedIndex
 
-proc render*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
+proc getDirectorySelectionSymbol(entry: Entry): string =
+  # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
+  result = if entry.selected: rightArrow else: " "
+
+proc renderFile*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
 
   var currentY = y
 
@@ -112,7 +113,25 @@ proc render*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
       tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
     else:
       tb.resetAttributes()
-    let line = addPrefix(index + 1, entry, maxDigitsForIndex) & " " & entry.name
+    let line = formatIndex(index + 1, maxDigitsForIndex) & " " & entry.name
+    tb.write(x, currentY, line)
+
+  return currentY + 1
+
+proc renderDirectory*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
+
+  var currentY = y
+
+  let maxDigitsForIndex = ($len(entries)).len
+  for index, entry in entries:
+    currentY = currentY + 1
+    if entry.selected:
+      tb.setBackgroundColor(BackgroundColor.bgBlack)
+      tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
+    else:
+      tb.resetAttributes()
+    let line = getDirectorySelectionSymbol(entry) & " " & folder & " " & entry.name
+
     tb.write(x, currentY, line)
 
   return currentY + 1
