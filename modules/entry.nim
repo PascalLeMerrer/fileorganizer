@@ -13,9 +13,6 @@ type
     path*: string
     selected*: bool
 
-type
-  Entries* = tuple[files, directories: seq[Entry]]
-
 func select*(entry: Entry): Entry =
   return Entry(name: entry.name, path: entry.path, selected: true)
 
@@ -71,24 +68,16 @@ func containsLetters(text: string, lettersToSearch: string): bool =
 
   return true
 
-proc filter*(entries: Entries, lettersToSearch: string): Entries =
-  var filteredFiles: seq[Entry] = @[]
-  var filteredDirectories: seq[Entry] = @[]
+proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
+  result = @[]
 
   # ignore diacritics; For example, é and è and transformed to e
   let asciiLettersToSearch = unidecode(lettersToSearch)
 
-  for entry in entries.files:
+  for entry in entries:
     let asciiFilename = unidecode(entry.name)
     if containsLetters(asciiFilename, asciiLettersToSearch):
-      filteredFiles.add(entry)
-
-  for entry in entries.directories:
-    let asciiDirectoryName = unidecode(entry.name)
-    if containsLetters(asciiDirectoryName, asciiLettersToSearch):
-      filteredDirectories.add(entry)
-
-  return (filteredFiles, filteredDirectories)
+      result.add(entry)
 
 
 func formatIndex*(index: int, width: int): string =
@@ -111,32 +100,20 @@ proc addPrefix(index: int, entry: Entry, width: int, ): string =
   let formattedIndex = formatIndex(index, width)
   result = if entry.selected: rightArrow & $formattedIndex else: " " & $formattedIndex
 
-proc render*(entries: Entries, tb: var TerminalBuffer, x: int) =
+proc render*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
 
-  var y = 4
-  tb.setBackgroundColor(BackgroundColor.bgGreen)
-  tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(x, y, "- Directories -")
-  let maxDigitsForDirectoryIndex = ($len(entries.directories)).len
-  for index, entry in entries.directories:
-    y = y + 1
+  var currentY = y
+
+  let maxDigitsForIndex = ($len(entries)).len
+  for index, entry in entries:
+    currentY = currentY + 1
     if entry.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
       tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
     else:
       tb.resetAttributes()
-    let line = addPrefix(index + 1, entry, maxDigitsForDirectoryIndex) & " " & entry.name
-    tb.write(x, y, line)
+    let line = addPrefix(index + 1, entry, maxDigitsForIndex) & " " & entry.name
+    tb.write(x, currentY, line)
 
-  tb.setBackgroundColor(BackgroundColor.bgGreen)
-  tb.setForegroundColor(ForegroundColor.fgBlack)
+  return currentY + 1
 
-  y = y + 1
-  tb.write(x, y, "- Files -")
-  tb.resetAttributes()
-
-  let maxDigitsForFileIndex = ($len(entries.files)).len
-  for index, entry in entries.files:
-    y = y + 1
-    let line = addPrefix(index + 1, entry, maxDigitsForFileIndex) & " " & entry.name
-    tb.write(x, y, line)

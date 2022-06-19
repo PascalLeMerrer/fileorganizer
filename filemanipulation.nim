@@ -8,7 +8,7 @@ type View = enum
 
 type
   State = object
-    filteredEntries: Entries # the file and directories in the current source dir matching the current filter
+    filteredFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
     view: View # the visible screen
     sourceDirectoryPath: string
@@ -23,35 +23,40 @@ proc exitProc() {.noconv.} =
   showCursor()
   quit(0)
 
+proc loadCurrentDirectoryContent()=
+  state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
+  let files = file.getFiles(state.sourceDirectoryPath) # factorize
+  state.filteredFiles = filter(files, "è")
+
 proc init() =
   illwillInit(fullscreen = true)
   setControlCHook(exitProc)
   hideCursor()
-  let entries = file.getDirectoryContent(state.sourceDirectoryPath)
-  state.filteredEntries = filter(entries, "è")
+  loadCurrentDirectoryContent()
 
 proc update() =
   var key = getKey()
   case key
   of Key.Down:
     case state.view
-    of SourceSelection:
+    of Home:
       state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
     else:
       discard
   of Key.Up:
     case state.view
-    of SourceSelection:
+    of Home:
       state.sourceSubDirectories = entry.selectPrevious(
           state.sourceSubDirectories)
     else:
       discard
   of Key.Enter:
-    state.view = Home
-    state.sourceDirectoryPath = file.getSelectedDirectoryPath(
-        state.sourceDirectoryPath, state.sourceSubDirectories)
-    let entries = file.getDirectoryContent(state.sourceDirectoryPath) # factorize
-    state.filteredEntries = filter(entries, "è")
+    case state.view
+      of Home:
+        state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceDirectoryPath, state.sourceSubDirectories)
+        loadCurrentDirectoryContent()
+      else:
+        discard
   of Key.Escape:
     if state.view == Home:
       exitProc()
@@ -59,10 +64,6 @@ proc update() =
       state.view = Home
   of Key.Q:
     exitProc()
-  of Key.S:
-    state.view = SourceSelection
-    state.sourceSubDirectories = file.getSubDirectories(
-        state.sourceDirectoryPath)
   else:
     discard
 
@@ -75,17 +76,23 @@ proc render() =
 
   tb.setBackgroundColor(BackgroundColor.bgWhite)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(1, 1, "Source")
-  tb.write(rightColumnX, 1, "Destination")
+  tb.write(2, 1, " Source ")
+  tb.write(rightColumnX, 1, " Destination ")
+
+  tb.setBackgroundColor(BackgroundColor.bgGreen)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+  tb.write(2, 4, " Directories ")
+  var nextY = entry.render(state.sourceSubDirectories, tb, 2,5)
+
+  inc nextY
+  tb.setBackgroundColor(BackgroundColor.bgGreen)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+  tb.write(2, nextY, " Files ")
+  inc nextY
+  discard entry.render(state.filteredFiles, tb, 2, nextY)
 
   tb.resetAttributes()
-  case state.view
-  of Home:
-    entry.render(state.filteredEntries, tb, 1)
-  of SourceSelection:
-    entry.render((@[], state.sourceSubDirectories), tb, 1)
-
-  tb.write(1, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
+  tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 
   tb.display()
 
