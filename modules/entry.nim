@@ -1,12 +1,6 @@
-import std/strformat
 import std/strutils
 import std/unicode
 import std/unidecode
-import illwill
-
-const checkSymbol = $Rune(0x2705)
-const rightArrow = $Rune(0x2794)
-const folder = $Rune(0x1F4C1)
 
 type
   Entry* = object
@@ -81,58 +75,5 @@ proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
       result.add(entry)
 
 
-func formatIndex*(index: int, width: int): string =
-  # formatting string cannot be defined dynamically
 
-  case width
-  of 2:
-    return fmt("{index:>2}")
-  of 3:
-    return fmt("{index:>3}")
-  of 4:
-    return fmt("{index:>4}")
-  of 5:
-    return fmt("{index:>5}")
-  else:
-    return $index
-
-
-proc getDirectorySelectionSymbol(entry: Entry): string =
-  # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
-  result = if entry.selected: rightArrow else: " "
-
-proc renderFile*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
-
-  var currentY = y
-
-  let maxDigitsForIndex = ($len(entries)).len
-  for index, entry in entries:
-    currentY = currentY + 1
-    if entry.selected:
-      tb.setBackgroundColor(BackgroundColor.bgBlack)
-      tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
-    else:
-      tb.resetAttributes()
-    let line = formatIndex(index + 1, maxDigitsForIndex) & " " & entry.name
-    tb.write(x, currentY, line)
-
-  return currentY + 1
-
-proc renderDirectory*(entries: seq[Entry], tb: var TerminalBuffer, x: int, y: int):int =
-
-  var currentY = y
-
-  let maxDigitsForIndex = ($len(entries)).len
-  for index, entry in entries:
-    currentY = currentY + 1
-    if entry.selected:
-      tb.setBackgroundColor(BackgroundColor.bgBlack)
-      tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
-    else:
-      tb.resetAttributes()
-    let line = getDirectorySelectionSymbol(entry) & " " & folder & " " & entry.name
-
-    tb.write(x, currentY, line)
-
-  return currentY + 1
 
