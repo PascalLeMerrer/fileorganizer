@@ -32,7 +32,7 @@ proc exitProc() {.noconv.} =
 proc loadCurrentDirectoryContent() =
   state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
   let files = file.getFiles(state.sourceDirectoryPath) # factorize
-  state.filteredFiles = filter(files, "è")
+  state.filteredFiles = filter(files, "") # TODO: read filter value from stdin
 
 proc init() =
   illwillInit(fullscreen = true)
