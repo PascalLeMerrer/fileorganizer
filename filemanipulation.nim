@@ -29,7 +29,7 @@ proc exitProc() {.noconv.} =
   showCursor()
   quit(0)
 
-proc loadCurrentDirectoryContent()=
+proc loadCurrentDirectoryContent() =
   state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
   let files = file.getFiles(state.sourceDirectoryPath) # factorize
   state.filteredFiles = filter(files, "è")
@@ -59,7 +59,8 @@ proc update() =
   of Key.Enter:
     case state.view
       of Home:
-        state.sourceDirectoryPath = file.getSelectedDirectoryPath(state.sourceDirectoryPath, state.sourceSubDirectories)
+        state.sourceDirectoryPath = file.getSelectedDirectoryPath(
+            state.sourceDirectoryPath, state.sourceSubDirectories)
         loadCurrentDirectoryContent()
       else:
         discard
@@ -93,7 +94,7 @@ proc getDirectorySelectionSymbol*(entry: Entry): string =
   # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
   result = if entry.selected: rightArrow else: " "
 
-proc renderFile(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int):int =
+proc renderFile(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
 
   var currentY = y
 
@@ -110,7 +111,7 @@ proc renderFile(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int):int
 
   return currentY + 1
 
-proc renderDirectory(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int):int =
+proc renderDirectory(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
 
   var currentY = y
 

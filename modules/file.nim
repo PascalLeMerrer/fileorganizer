@@ -20,7 +20,7 @@ proc getFiles*(directoryPath: string): seq[Entry] =
 
 # Returns the list of directories in the current one, plus the link to the parent (..)
 proc getSubDirectories*(directoryPath: string): seq[Entry] =
-  result = @[Entry(path: ParDir, name: ParDir, selected:true)]
+  result = @[Entry(path: ParDir, name: ParDir, selected: true)]
   for kind, path in os.walkDir(directoryPath):
     let filename = splitPath(path).tail
     if filename.startsWith('.'):
