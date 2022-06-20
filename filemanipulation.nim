@@ -70,6 +70,9 @@ proc updateFilteringView() =
   case key
   of Key.Escape:
     state.view = Home
+  of Key.Backspace:
+    if state.filter.len > 0:
+      state.filter = state.filter[0 .. ^2]
   else:
     if key >= Key.A and key <= Key.Z:
       state.filter.add(($key).toLower())
