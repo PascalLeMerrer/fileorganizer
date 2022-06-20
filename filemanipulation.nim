@@ -6,7 +6,7 @@ import std/unicode
 import modules/[entry, file]
 
 const checkSymbol = $Rune(0x2705)
-const rightArrow = $Rune(0x2794)
+const rightArrow = $Rune(0x2192)
 
 type View = enum
   Home, Filtering
@@ -73,6 +73,7 @@ proc updateFilteringView() =
   else:
     if key >= Key.A and key <= Key.Z:
       state.filter.add(($key).toLower())
+
 
 proc update() =
   case state.view
@@ -143,19 +144,24 @@ proc render() =
 
   let rightColumnX = int(terminalWidth() / 2)
 
-  tb.fill(0, 0, terminalWidth() - 1, terminalHeight() - 1, " ")
-
   tb.setForegroundColor(ForegroundColor.fgYellow)
   tb.drawRect(0, 0, tb.width-1, tb.height-1)
 
+  var nextY: int = 1
+  var filter = " Filter: " & state.filter
+  if state.view == Filtering:
+    filter.add("|")
+  tb.write(2, nextY, filter)
+  inc nextY
+
   tb.setBackgroundColor(BackgroundColor.bgWhite)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(rightColumnX, 1, " Destination ")
-
+  tb.write(rightColumnX, nextY, " Destination ")
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(2, 1, " Source directory - Filter: " & state.filter)
-  var nextY = tb.renderDirectories(state.sourceSubDirectories, 2, 2)
+  tb.write(2, nextY, " Source directory")
+
+  nextY = tb.renderDirectories(state.sourceSubDirectories, 2, nextY)
 
   inc nextY
   tb.setBackgroundColor(BackgroundColor.bgGreen)
