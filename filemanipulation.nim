@@ -7,19 +7,25 @@ import modules/[entry, file]
 
 const checkSymbol = $Rune(0x2705)
 const rightArrow = $Rune(0x2794)
-const folder = $Rune(0x1F4C1)
 
 type View = enum
-  Home, SourceSelection
+  Home, Filtering
+
+type
+  PressedKey =
+    tuple[code: int, name: string]
 
 type
   State = object
+    filter: string
     filteredFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
     view: View # the visible screen
     sourceDirectoryPath: string
 
+
 var state = State(
+    filter: "",
     view: Home,
     sourceDirectoryPath: getHomeDir()
   )
@@ -31,8 +37,7 @@ proc exitProc() {.noconv.} =
 
 proc loadCurrentDirectoryContent() =
   state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
-  let files = file.getFiles(state.sourceDirectoryPath) # factorize
-  state.filteredFiles = filter(files, "") # TODO: read filter value from stdin
+  let files = file.getFiles(state.sourceDirectoryPath)
 
 proc init() =
   illwillInit(fullscreen = true)
@@ -40,39 +45,46 @@ proc init() =
   hideCursor()
   loadCurrentDirectoryContent()
 
-proc update() =
-  var key = getKey()
-  case key
-  of Key.Down:
-    case state.view
-    of Home:
+proc updateHomeView() =
+    let key = getKey()
+    case key
+    of Key.Down:
       state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
-    else:
-      discard
-  of Key.Up:
-    case state.view
-    of Home:
-      state.sourceSubDirectories = entry.selectPrevious(
-          state.sourceSubDirectories)
-    else:
-      discard
-  of Key.Enter:
-    case state.view
-      of Home:
-        state.sourceDirectoryPath = file.getSelectedDirectoryPath(
-            state.sourceDirectoryPath, state.sourceSubDirectories)
-        loadCurrentDirectoryContent()
-      else:
-        discard
-  of Key.Escape:
-    if state.view == Home:
+    of Key.Up:
+      state.sourceSubDirectories = entry.selectPrevious(state.sourceSubDirectories)
+    of Key.Enter:
+      state.sourceDirectoryPath = file.getSelectedDirectoryPath(
+          state.sourceDirectoryPath, state.sourceSubDirectories)
+      loadCurrentDirectoryContent()
+    of Key.Escape, Key.Q:
       exitProc()
+    of Key.F:
+      state.view = Filtering
     else:
-      state.view = Home
-  of Key.Q:
-    exitProc()
+      discard
+
+
+proc updateFilteringView() =
+  let key = getKey()
+
+  case key
+  of Key.Escape:
+    state.view = Home
   else:
-    discard
+    if key >= Key.A and key <= Key.Z:
+      state.filter.add(($key).toLower())
+
+proc update() =
+  case state.view
+  of Home:
+    updateHomeView()
+  of Filtering:
+    updateFilteringView()
+
+  let files = file.getFiles(state.sourceDirectoryPath) # factorize
+  state.filteredFiles = filter(files, state.filter)
+
+
 
 func formatIndex*(index: int, width: int): string =
   # formatting string cannot be defined dynamically
@@ -90,17 +102,13 @@ func formatIndex*(index: int, width: int): string =
     return $index
 
 
-proc getDirectorySelectionSymbol*(entry: Entry): string =
-  # width is the max number of digits for the index value; for example if the list contains 10 to 99 items, it's 2
-  result = if entry.selected: rightArrow else: " "
-
-proc renderFile(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
+proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
 
   var currentY = y
 
   let maxDigitsForIndex = ($len(entries)).len
   for index, entry in entries:
-    currentY = currentY + 1
+    inc currentY
     if entry.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
       tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
@@ -111,19 +119,19 @@ proc renderFile(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): in
 
   return currentY + 1
 
-proc renderDirectory(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
+proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
 
   var currentY = y
 
-  let maxDigitsForIndex = ($len(entries)).len
-  for index, entry in entries:
-    currentY = currentY + 1
-    if entry.selected:
+  for index, directory in entries:
+    inc currentY
+    if directory.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
       tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
     else:
       tb.resetAttributes()
-    let line = getDirectorySelectionSymbol(entry) & " " & folder & " " & entry.name
+    let selectionSymbol = if directory.selected: rightArrow else: " "
+    let line = selectionSymbol & " " & directory.name
 
     tb.write(x, currentY, line)
 
@@ -146,15 +154,15 @@ proc render() =
 
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(2, 1, " Source directory ")
-  var nextY = tb.renderDirectory(state.sourceSubDirectories, 2, 2)
+  tb.write(2, 1, " Source directory - Filter: " & state.filter)
+  var nextY = tb.renderDirectories(state.sourceSubDirectories, 2, 2)
 
   inc nextY
   tb.setBackgroundColor(BackgroundColor.bgGreen)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   tb.write(2, nextY, " Files ")
   inc nextY
-  discard tb.renderFile(state.filteredFiles, 2, nextY)
+  discard tb.renderFiles(state.filteredFiles, 2, nextY)
 
   tb.resetAttributes()
   tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")

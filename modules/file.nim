@@ -1,5 +1,6 @@
 import std/os
 import std/strutils
+import std/unidecode
 import ./entry
 
 proc getFiles*(directoryPath: string): seq[Entry] =
@@ -11,7 +12,7 @@ proc getFiles*(directoryPath: string): seq[Entry] =
     of pcFile:
       let entry = Entry(
         path: path,
-        name: filename,
+        name: unidecode(filename), # Illwill does not support non ASCII chars
         selected: false
       )
       result.add(entry)
@@ -29,7 +30,7 @@ proc getSubDirectories*(directoryPath: string): seq[Entry] =
     of pcDir:
       let entry = Entry(
         path: path,
-        name: filename,
+        name: unidecode(filename), # Illwill does not support non ASCII chars
         selected: false
       )
       result.add(entry)
