@@ -1,3 +1,4 @@
+import std/sequtils
 import std/strutils
 import std/unicode
 import std/unidecode
@@ -14,7 +15,18 @@ func select*(entry: Entry): Entry =
 func unselect*(entry: Entry): Entry =
   return Entry(name: entry.name, path: entry.path, selected: false)
 
-proc selectNext*(entries: seq[Entry]): seq[Entry] =
+func isAnySelected*(entries: seq[Entry]): bool =
+  return sequtils.any(entries, func (entry:Entry):bool = return entry.selected)
+
+func selectFirst*(entries: seq[Entry]): seq[Entry] =
+  if entries.len == 0:
+    return entries
+  let firstEntry = select(entries[0])
+  if entries.len == 1:
+    return @[firstEntry]
+  return concat(@[firstEntry], entries[1..^1])
+
+func selectNext*(entries: seq[Entry]): seq[Entry] =
   result = @[]
   var shouldSelectNextEntry = false
   var shouldSelectFirstEntry = false
@@ -42,7 +54,7 @@ func reverse*(entries: seq[Entry]): seq[Entry] =
   for i in countdown(entries.len - 1, 0):
     result.add(entries[i])
 
-proc selectPrevious*(entries: seq[Entry]): seq[Entry] =
+func selectPrevious*(entries: seq[Entry]): seq[Entry] =
   reverse(selectNext(reverse(entries)))
 
 func containsLetters(text: string, lettersToSearch: string): bool =
@@ -73,6 +85,7 @@ proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
     let asciiFilename = unidecode(entry.name)
     if containsLetters(asciiFilename, asciiLettersToSearch):
       result.add(entry)
+
 
 
 

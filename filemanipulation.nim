@@ -36,8 +36,14 @@ proc exitProc() {.noconv.} =
   quit(0)
 
 proc loadCurrentDirectoryContent() =
-  state.sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
+  let sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
+  state.sourceSubDirectories = filter(sourceSubDirectories, state.filter)
+  if not entry.isAnySelected(state.sourceSubDirectories):
+    # the .. entry is excluded of selection
+    state.sourceSubDirectories = entry.selectFirst(state.sourceSubDirectories)
   let files = file.getFiles(state.sourceDirectoryPath)
+  state.filteredFiles = filter(files, state.filter)
+
 
 proc init() =
   illwillInit(fullscreen = true)
@@ -84,11 +90,7 @@ proc update() =
     updateHomeView()
   of Filtering:
     updateFilteringView()
-
-  let files = file.getFiles(state.sourceDirectoryPath) # factorize
-  state.filteredFiles = filter(files, state.filter)
-
-
+    loadCurrentDirectoryContent()
 
 func formatIndex*(index: int, width: int): string =
   # formatting string cannot be defined dynamically

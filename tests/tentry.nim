@@ -29,3 +29,7 @@ suite "Entry selection":
     let expected : seq[Entry] = @[e("a"), e("b"), e("c"), e("d", selected=true)]
     check(entry.selectPrevious(entries) == expected)
 
+  test "First entry in a sequence may be selected":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c"), e("d")]
+    let expected : seq[Entry] = @[e("a", selected=true), e("b"), e("c"), e("d")]
+    check(entry.selectFirst(entries) == expected)
