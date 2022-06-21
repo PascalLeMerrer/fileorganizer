@@ -42,7 +42,8 @@ proc loadCurrentDirectoryContent() =
     # the .. entry is excluded of selection
     state.sourceSubDirectories = entry.selectFirst(state.sourceSubDirectories)
   let files = file.getFiles(state.sourceDirectoryPath)
-  state.filteredFiles = filter(files, state.filter)
+  let filterFiles = filter(files, state.filter)
+  state.filteredFiles = selectFirst(filterFiles)
 
 proc focusNextZone() =
   case state.focus
@@ -79,6 +80,22 @@ proc updateHomeView() =
     else:
       discard
 
+proc updateSourceFilesView() =
+    let key = getKey()
+    case key
+    of Key.Down:
+      state.filteredFiles = entry.selectNext(state.filteredFiles)
+    of Key.Up:
+      state.filteredFiles = entry.selectPrevious(state.filteredFiles)
+    of Key.Escape, Key.Q:
+      exitProc()
+    of Key.F:
+      state.focus = Filtering
+    of Key.Tab:
+      focusNextZone()
+    else:
+      discard
+
 
 proc updateFilteringView() =
   let key = getKey()
@@ -98,8 +115,10 @@ proc updateFilteringView() =
 
 proc update() =
   case state.focus
-  of SourceSelection, FileSelection:
+  of SourceSelection:
     updateHomeView()
+  of FileSelection:
+    updateSourceFilesView()
   of Filtering:
     updateFilteringView()
     loadCurrentDirectoryContent()
@@ -143,14 +162,15 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): i
   var currentY = y
 
   let maxDigitsForIndex = ($len(entries)).len
-  for index, entry in entries:
+  for index, fileEntry in entries:
     inc currentY
-    if entry.selected:
+    if fileEntry.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
       tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
     else:
       tb.resetAttributes()
-    let line = formatIndex(index + 1, maxDigitsForIndex) & " " & entry.name
+    let selectionSymbol = if fileEntry.selected: rightArrow else: " "
+    let line = selectionSymbol & " " & formatIndex(index + 1, maxDigitsForIndex) & " " & fileEntry.name
     tb.write(x, currentY, line)
   return currentY + 1
 
