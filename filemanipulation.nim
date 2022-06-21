@@ -9,7 +9,10 @@ const checkSymbol = $Rune(0x2705)
 const rightArrow = $Rune(0x2192)
 
 type View = enum
-  Filtering, SourceSelection, FileSelection
+  DestinationSelection,
+  FileSelection
+  Filtering,
+  SourceSelection,
 
 type
   PressedKey =
@@ -18,36 +21,56 @@ type
 type
   State = object
     filter: string
-    filteredFiles: seq[Entry] # the files in the current source dir matching the current filter
+    filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
     focus: View # the part of the screen with the focus
     sourceDirectoryPath: string
+    destinationDirectoryPath: string
+    destinationSubDirectories: seq[Entry] # the directories into the current destination directory
+    filteredDestinationFiles: seq[Entry] # the files in the current destination dir matching the current filter
 
 
 var state = State(
     filter: "",
     focus: SourceSelection,
-    sourceDirectoryPath: getHomeDir()
+    sourceDirectoryPath: getHomeDir(),
+    destinationDirectoryPath: getHomeDir()
   )
+
+let rightColumnX = int(terminalWidth() / 2)
 
 proc exitProc() {.noconv.} =
   illwillDeinit()
   showCursor()
   quit(0)
 
-proc loadCurrentDirectoryContent() =
+proc loadSourceDirectoryContent() =
   let sourceSubDirectories = file.getSubDirectories(state.sourceDirectoryPath)
   state.sourceSubDirectories = filter(sourceSubDirectories, state.filter)
   if not entry.isAnySelected(state.sourceSubDirectories):
-    # the .. entry is excluded of selection
+    # the previously selected entry is excluded of selection
     state.sourceSubDirectories = entry.selectFirst(state.sourceSubDirectories)
   let files = file.getFiles(state.sourceDirectoryPath)
-  let filterFiles = filter(files, state.filter)
-  state.filteredFiles = selectFirst(filterFiles)
+  let filteredFiles = filter(files, state.filter)
+  state.filteredSourceFiles = selectFirst(filteredFiles)
+
+proc loadDestinationDirectoryContent() =
+  let destinationSubDirectories = file.getSubDirectories(state.destinationDirectoryPath)
+  state.destinationSubDirectories = filter(destinationSubDirectories, state.filter)
+  if not entry.isAnySelected(state.destinationSubDirectories):
+    # the previously selected entry is excluded of selection
+    state.destinationSubDirectories = entry.selectFirst(state.destinationSubDirectories)
+
+  let files = file.getFiles(state.destinationDirectoryPath)
+  let filteredFiles = filter(files, state.filter)
+  state.filteredDestinationFiles = selectFirst(filteredFiles)
 
 proc focusNextZone() =
+  # todo use a map
   case state.focus
   of SourceSelection:
+    state.focus = DestinationSelection
+  of DestinationSelection:
     state.focus = FileSelection
   of FileSelection:
     state.focus = Filtering
@@ -58,9 +81,10 @@ proc init() =
   illwillInit(fullscreen = true)
   setControlCHook(exitProc)
   hideCursor()
-  loadCurrentDirectoryContent()
+  loadSourceDirectoryContent()
+  loadDestinationDirectoryContent()
 
-proc updateHomeView() =
+proc updateSourceDirectoriesView() =
     let key = getKey()
     case key
     of Key.Down:
@@ -70,7 +94,27 @@ proc updateHomeView() =
     of Key.Enter:
       state.sourceDirectoryPath = file.getSelectedDirectoryPath(
           state.sourceDirectoryPath, state.sourceSubDirectories)
-      loadCurrentDirectoryContent()
+      loadSourceDirectoryContent()
+    of Key.Escape, Key.Q:
+      exitProc()
+    of Key.F:
+      state.focus = Filtering
+    of Key.Tab:
+      focusNextZone()
+    else:
+      discard
+
+proc updateDestinationDirectoriesView() =
+    let key = getKey()
+    case key
+    of Key.Down:
+      state.destinationSubDirectories = entry.selectNext(state.destinationSubDirectories)
+    of Key.Up:
+      state.destinationSubDirectories = entry.selectPrevious(state.destinationSubDirectories)
+    of Key.Enter:
+      state.destinationDirectoryPath = file.getSelectedDirectoryPath(
+          state.destinationDirectoryPath, state.destinationSubDirectories)
+      loadDestinationDirectoryContent()
     of Key.Escape, Key.Q:
       exitProc()
     of Key.F:
@@ -84,9 +128,9 @@ proc updateSourceFilesView() =
     let key = getKey()
     case key
     of Key.Down:
-      state.filteredFiles = entry.selectNext(state.filteredFiles)
+      state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
     of Key.Up:
-      state.filteredFiles = entry.selectPrevious(state.filteredFiles)
+      state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
     of Key.Escape, Key.Q:
       exitProc()
     of Key.F:
@@ -115,13 +159,16 @@ proc updateFilteringView() =
 
 proc update() =
   case state.focus
+  of DestinationSelection:
+    updateDestinationDirectoriesView()
   of SourceSelection:
-    updateHomeView()
+    updateSourceDirectoriesView()
   of FileSelection:
     updateSourceFilesView()
   of Filtering:
     updateFilteringView()
-    loadCurrentDirectoryContent()
+    loadSourceDirectoryContent()
+    loadDestinationDirectoryContent()
 
 func formatIndex*(index: int, width: int): string =
   # formatting string cannot be defined dynamically
@@ -205,9 +252,13 @@ proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int): int =
 
 proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int): int =
   var nextY = y
-  tb.setBackgroundColor(BackgroundColor.bgWhite)
+  let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(x, nextY, " Destination ")
+  tb.write(x, nextY, " Destination directory")
+  tb.resetAttributes()
+  nextY = tb.renderDirectories(state.destinationSubDirectories, rightColumnX, nextY)
+  inc nextY
   return nextY
 
 proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int): int =
@@ -219,7 +270,7 @@ proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int): int =
 
   tb.write(2, nextY, " Files ")
   inc nextY
-  nextY = tb.renderFiles(state.filteredFiles, 2, nextY)
+  nextY = tb.renderFiles(state.filteredSourceFiles, 2, nextY)
   tb.resetAttributes()
   return nextY
 
@@ -231,8 +282,6 @@ proc render() =
 
   var nextY: int = 1
   nextY = tb.renderFilter(1, nextY)
-
-  let rightColumnX = int(terminalWidth() / 2)
   discard tb.renderDestinationDirectories(rightColumnX, nextY)
 
   nextY = renderSourceDirectories(tb, 2, nextY)
