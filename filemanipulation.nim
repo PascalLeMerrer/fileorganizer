@@ -9,7 +9,7 @@ const checkSymbol = $Rune(0x2705)
 const rightArrow = $Rune(0x2192)
 
 type View = enum
-  Home, Filtering
+  SourceSelection, Filtering
 
 type
   PressedKey =
@@ -26,7 +26,7 @@ type
 
 var state = State(
     filter: "",
-    focus: Home,
+    focus: SourceSelection,
     sourceDirectoryPath: getHomeDir()
   )
 
@@ -44,6 +44,12 @@ proc loadCurrentDirectoryContent() =
   let files = file.getFiles(state.sourceDirectoryPath)
   state.filteredFiles = filter(files, state.filter)
 
+proc focusNextZone() =
+  case state.focus
+  of SourceSelection:
+    state.focus = Filtering
+  of Filtering:
+    state.focus = SourceSelection
 
 proc init() =
   illwillInit(fullscreen = true)
@@ -66,6 +72,8 @@ proc updateHomeView() =
       exitProc()
     of Key.F:
       state.focus = Filtering
+    of Key.Tab:
+      focusNextZone()
     else:
       discard
 
@@ -75,10 +83,12 @@ proc updateFilteringView() =
 
   case key
   of Key.Escape:
-    state.focus = Home
+    state.focus = SourceSelection
   of Key.Backspace:
     if state.filter.len > 0:
       state.filter = state.filter[0 .. ^2]
+  of Key.Tab:
+    focusNextZone()
   else:
     if key >= Key.A and key <= Key.Z:
       state.filter.add(($key).toLower())
@@ -86,7 +96,7 @@ proc updateFilteringView() =
 
 proc update() =
   case state.focus
-  of Home:
+  of SourceSelection:
     updateHomeView()
   of Filtering:
     updateFilteringView()
