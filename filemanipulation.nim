@@ -20,13 +20,13 @@ type
     filter: string
     filteredFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
-    view: View # the visible screen
+    focus: View # the part of the screen with the focus
     sourceDirectoryPath: string
 
 
 var state = State(
     filter: "",
-    view: Home,
+    focus: Home,
     sourceDirectoryPath: getHomeDir()
   )
 
@@ -65,7 +65,7 @@ proc updateHomeView() =
     of Key.Escape, Key.Q:
       exitProc()
     of Key.F:
-      state.view = Filtering
+      state.focus = Filtering
     else:
       discard
 
@@ -75,7 +75,7 @@ proc updateFilteringView() =
 
   case key
   of Key.Escape:
-    state.view = Home
+    state.focus = Home
   of Key.Backspace:
     if state.filter.len > 0:
       state.filter = state.filter[0 .. ^2]
@@ -85,7 +85,7 @@ proc updateFilteringView() =
 
 
 proc update() =
-  case state.view
+  case state.focus
   of Home:
     updateHomeView()
   of Filtering:
@@ -154,7 +154,7 @@ proc render() =
 
   var nextY: int = 1
   var filter = " Filter: " & state.filter
-  if state.view == Filtering:
+  if state.focus == Filtering:
     filter.add("|")
   tb.write(2, nextY, filter)
   inc nextY
