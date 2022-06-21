@@ -9,7 +9,7 @@ const checkSymbol = $Rune(0x2705)
 const rightArrow = $Rune(0x2192)
 
 type View = enum
-  SourceSelection, Filtering
+  Filtering, SourceSelection, FileSelection
 
 type
   PressedKey =
@@ -47,6 +47,8 @@ proc loadCurrentDirectoryContent() =
 proc focusNextZone() =
   case state.focus
   of SourceSelection:
+    state.focus = FileSelection
+  of FileSelection:
     state.focus = Filtering
   of Filtering:
     state.focus = SourceSelection
@@ -96,7 +98,7 @@ proc updateFilteringView() =
 
 proc update() =
   case state.focus
-  of SourceSelection:
+  of SourceSelection, FileSelection:
     updateHomeView()
   of Filtering:
     updateFilteringView()
@@ -117,6 +119,24 @@ func formatIndex*(index: int, width: int): string =
   else:
     return $index
 
+proc renderFilter(tb: var TerminalBuffer, x: int, y: int): int =
+  var nextY = y
+
+  let bgColor = if state.focus == Filtering: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  tb.setBackgroundColor(bgColor)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+
+  var filter = state.filter
+  if state.focus == Filtering:
+    filter.add("|")
+
+  tb.write(x + 1, nextY, " Filter ")
+  tb.resetAttributes()
+  tb.write(x+10, nextY, filter)
+  inc nextY
+  tb.drawHorizLine(x, terminalWidth() - 2, nextY)
+  inc nextY
+  return nextY
 
 proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
 
@@ -132,7 +152,6 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): i
       tb.resetAttributes()
     let line = formatIndex(index + 1, maxDigitsForIndex) & " " & entry.name
     tb.write(x, currentY, line)
-
   return currentY + 1
 
 proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
@@ -153,39 +172,52 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
 
   return currentY + 1
 
+proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int): int =
+  var nextY = y
+  let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  tb.setBackgroundColor(bgColor)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+  tb.write(x, nextY, " Source directory")
+  tb.resetAttributes()
+  nextY = tb.renderDirectories(state.sourceSubDirectories, x, nextY)
+  inc nextY
+  return nextY
+
+proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int): int =
+  var nextY = y
+  tb.setBackgroundColor(BackgroundColor.bgWhite)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+  tb.write(x, nextY, " Destination ")
+  return nextY
+
+proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int): int =
+  var nextY = y
+
+  let bgColor = if state.focus == FileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  tb.setBackgroundColor(bgColor)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+
+  tb.write(2, nextY, " Files ")
+  inc nextY
+  nextY = tb.renderFiles(state.filteredFiles, 2, nextY)
+  tb.resetAttributes()
+  return nextY
 
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-
-  let rightColumnX = int(terminalWidth() / 2)
 
   tb.setForegroundColor(ForegroundColor.fgYellow)
   tb.drawRect(0, 0, tb.width-1, tb.height-1)
 
   var nextY: int = 1
-  var filter = " Filter: " & state.filter
-  if state.focus == Filtering:
-    filter.add("|")
-  tb.write(2, nextY, filter)
-  inc nextY
+  nextY = tb.renderFilter(1, nextY)
 
-  tb.setBackgroundColor(BackgroundColor.bgWhite)
-  tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(rightColumnX, nextY, " Destination ")
-  tb.setBackgroundColor(BackgroundColor.bgGreen)
-  tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(2, nextY, " Source directory")
+  let rightColumnX = int(terminalWidth() / 2)
+  discard tb.renderDestinationDirectories(rightColumnX, nextY)
 
-  nextY = tb.renderDirectories(state.sourceSubDirectories, 2, nextY)
+  nextY = renderSourceDirectories(tb, 2, nextY)
+  nextY = renderSourceFiles(tb, 2, nextY)
 
-  inc nextY
-  tb.setBackgroundColor(BackgroundColor.bgGreen)
-  tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(2, nextY, " Files ")
-  inc nextY
-  discard tb.renderFiles(state.filteredFiles, 2, nextY)
-
-  tb.resetAttributes()
   tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 
   tb.display()
