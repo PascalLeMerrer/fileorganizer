@@ -1,5 +1,6 @@
 import std/strutils
 import std/unittest
+import std/options
 
 from ../modules/entry import Entry, filter
 import ../modules/file

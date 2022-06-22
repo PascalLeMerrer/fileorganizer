@@ -1,14 +1,31 @@
+import std/options
 import std/sequtils
 import std/strutils
 import std/unicode
 import std/unidecode
-from std/os import Pardir
-
+from std/os import Pardir, DirSep
 type
   Entry* = object
     name*: string
     path*: string
     selected*: bool
+
+# TODO move to file.nim or commands.nim
+type Command* = ref object of RootObj
+  file*: Entry
+  directory*: string
+method execute*(this: Command) {.base.} =
+  discard
+method undo*(this: Command) {.base.} =
+  discard
+
+type MoveCommand* = ref object of Command
+method execute(this: MoveCommand) =
+  let destinationPath = this.directory & DirSep & this.file.name
+  os.moveFile(this.file.path, destinationPath)
+method undo(this: MoveCommand) =
+  let currentPath = this.directory & DirSep & this.file.name
+  os.moveFile(currentPath, this.file.path)
 
 func select*(entry: Entry): Entry =
   return Entry(name: entry.name, path: entry.path, selected: true)
@@ -25,6 +42,13 @@ func getSelectedItemIndex*(entries:seq[Entry]):int =
     if entry.selected:
       return index
   return -1
+
+func getSelectedItem*(entries:seq[Entry]):Option[Entry] =
+  # return the selected entry
+  for index, entry in entries:
+    if entry.selected:
+      return some(entry)
+  return none(Entry)
 
 func selectFirst*(entries: seq[Entry]): seq[Entry] =
   if entries.len == 0:

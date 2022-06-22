@@ -41,3 +41,15 @@ suite "Entry selection":
   test "getSelectedItemIndex returns -1 where there is no selected entry in the sequence":
     let entries : seq[Entry] = @[e("a"), e("b"), e("c"), e("d")]
     check(entry.getSelectedItemIndex(entries) == -1)
+
+  test "getSelectedItem returns the first selected entry in the sequence":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c", selected=true), e("d")]
+    let expected = e("c", selected=true)
+    let actual = entry.getSelectedItem(entries)
+    check(actual.isSome)
+    check(actual.get() == expected)
+
+  test "getSelectedItem returns null where there is no selected entry in the sequence":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c"), e("d")]
+    let actual = entry.getSelectedItem(entries)
+    check(actual.isNone)

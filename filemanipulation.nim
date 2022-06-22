@@ -6,6 +6,7 @@ import std/tables
 import std/unicode
 import modules/[entry, file]
 import std/sugar # for dump
+import std/options
 
 # TODO
 # Move command
@@ -18,6 +19,7 @@ import std/sugar # for dump
 # CTRL+DOWN to go to the last item
 # scrollbar
 # remove all magic numbers
+# R for relaod/refresh
 
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
@@ -134,6 +136,7 @@ type
 
 type
   State = object
+    commands: seq[Command] # the last command, which may by canceled
     filter: string
     filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
@@ -277,8 +280,25 @@ proc updateSourceFilesView() =
       exitProc()
     of Key.F:
       state.focus = Filtering
+    of Key.M:
+      let selectedFile = entry.getSelectedItem(state.filteredSourceFiles)
+      if selectedFile.isSome:
+        let command = MoveCommand(file: selectedFile.get(), directory: state.destinationDirectoryPath)
+        command.execute()
+        state.commands.add(command)
+        loadSourceDirectoryContent()
+        loadDestinationDirectoryContent()
+      else:
+        # TODO display error
+        discard
     of Key.S:
       state.focus = SourceSelection
+    of Key.U:
+      if state.commands.len > 0:
+        let lastExecutedCommand = state.commands[^1]
+        lastExecutedCommand.undo()
+        loadSourceDirectoryContent()
+        loadDestinationDirectoryContent()
     of Key.Tab:
       focusNextZone()
     else:
