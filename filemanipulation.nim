@@ -18,6 +18,7 @@ import modules/[entry, file]
 
 
 const rightArrow = $Rune(0x2192)
+const yLimitBetweenDirAndFiles = 22
 
 let characters = {
   Key.Space: " ",
@@ -362,12 +363,16 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, ma
     tb.write(x, currentY, line)
   return currentY + 1
 
-proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int): int =
+proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int, maxY: int): int =
 
   var currentY = y
 
   for index, directory in entries:
     inc currentY
+
+    if currentY > maxY:
+      break # avoid vertical overflow
+
     if directory.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
       tb.setForegroundColor(ForegroundColor.fgBlue, bright = true)
@@ -376,7 +381,7 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
     let selectionSymbol = if directory.selected: rightArrow else: " "
     var line = selectionSymbol & " " & directory.name
     if line.len > maxWidth:
-      line = line[0..maxWidth-1]
+      line = line[0..maxWidth-1] # avoid horizontal overflow
     tb.write(x, currentY, line)
 
   return currentY + 1
@@ -392,7 +397,7 @@ proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: i
 
   tb.write(x, nextY, title)
   tb.resetAttributes()
-  nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth)
+  nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth, maxY=yLimitBetweenDirAndFiles - 1 )
   inc nextY
   return nextY
 
@@ -407,7 +412,7 @@ proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int, maxWid
   tb.write(x, nextY, title)
   tb.resetAttributes()
 
-  nextY = renderDirectories(tb, state.destinationSubDirectories, x, nextY, maxWidth)
+  nextY = renderDirectories(tb, state.destinationSubDirectories, x, nextY, maxWidth, maxY=yLimitBetweenDirAndFiles - 1)
   inc nextY
   return nextY
 
@@ -431,6 +436,10 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
     # middle vertical separation
     let x = getHalfWidth() + 1
     bb.drawVertLine(x, 2, terminalHeight() - 3)
+
+
+    # separator between directories and files
+    bb.drawHorizLine(x1=0, x2=terminalWidth(), y=yLimitBetweenDirAndFiles)
 
     # filter input box
     bb.drawRect(0, 0, terminalWidth(), 2)
