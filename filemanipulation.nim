@@ -527,8 +527,8 @@ proc render() =
   discard renderDestinationDirectories(tb, rightColumnX, nextY, maxWidth)
 
   nextY = renderSourceDirectories(tb, leftColumnX, nextY, maxWidth)
-  discard renderSourceFiles(tb, leftColumnX, nextY, maxWidth)
-  discard renderDestinationFiles(tb, rightColumnX, nextY, maxWidth)
+  discard renderSourceFiles(tb, leftColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
+  discard renderDestinationFiles(tb, rightColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
 
   tb.write(leftColumnX, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 
