@@ -8,15 +8,17 @@ import modules/[entry, file]
 import std/sugar # for dump
 
 # TODO
-# scroll when content is high than container
-# display separation lines between dirs and files
 # diplay files in destination dir
 # Move command
 # Move all command (A)
 # Undo command
 # Integrated Help (H)
 # highlight moved files in dest dir
-
+# select file by number
+# CTRL+UP to go to the first item
+# CTRL+DOWN to go to the last item
+# scrollbar
+# remove all magic numbers
 
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
@@ -120,9 +122,10 @@ let characters = {
 }.toTable
 
 type View = enum
+  DestinationFileSelection
   DestinationSelection,
-  FileSelection
   Filtering,
+  SourceFileSelection
   SourceSelection,
 
 type
@@ -186,8 +189,10 @@ proc focusNextZone() =
   of SourceSelection:
     state.focus = DestinationSelection
   of DestinationSelection:
-    state.focus = FileSelection
-  of FileSelection:
+    state.focus = SourceFileSelection
+  of SourceFileSelection:
+    state.focus = DestinationFileSelection
+  of DestinationFileSelection:
     state.focus = Filtering
   of Filtering:
     state.focus = SourceSelection
@@ -279,6 +284,31 @@ proc updateSourceFilesView() =
     else:
       discard
 
+proc updateDestinationFilesView() =
+    # TODO see if its possible to factorize with updateSourceFilesView using high order functions
+    let key = getKey()
+    case key
+    of Key.Down:
+      state.filteredDestinationFiles = entry.selectNext(state.filteredDestinationFiles)
+    of Key.Up:
+      state.filteredDestinationFiles = entry.selectPrevious(state.filteredDestinationFiles)
+    of Key.C:
+      state.filter = ""
+      loadSourceDirectoryContent()
+      loadDestinationDirectoryContent()
+    of Key.D:
+      state.focus = DestinationSelection
+    of Key.Escape, Key.Q:
+      exitProc()
+    of Key.F:
+      state.focus = Filtering
+    of Key.S:
+      state.focus = SourceSelection
+    of Key.Tab:
+      focusNextZone()
+    else:
+      discard
+
 
 proc updateFilteringView() =
   let key = getKey()
@@ -302,8 +332,10 @@ proc update() =
     updateDestinationDirectoriesView()
   of SourceSelection:
     updateSourceDirectoriesView()
-  of FileSelection:
+  of SourceFileSelection:
     updateSourceFilesView()
+  of DestinationFileSelection:
+    updateDestinationFilesView()
   of Filtering:
     updateFilteringView()
     loadSourceDirectoryContent()
@@ -441,13 +473,26 @@ proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int, maxWid
 proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
 
-  let bgColor = if state.focus == FileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  let bgColor = if state.focus == SourceFileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
-  tb.write(2, nextY, " Files ")
+  tb.write(2, nextY, " Source files ")
   let maxY = terminalHeight() - 4
   nextY = renderFiles(tb, state.filteredSourceFiles, 2, nextY, maxWidth, maxY)
+  tb.resetAttributes()
+  return nextY
+
+proc renderDestinationFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
+  var nextY = y
+
+  let bgColor = if state.focus == DestinationFileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  tb.setBackgroundColor(bgColor)
+  tb.setForegroundColor(ForegroundColor.fgBlack)
+
+  tb.write(x, nextY, " Destination files ")
+  let maxY = terminalHeight() - 4
+  nextY = renderFiles(tb, state.filteredDestinationFiles, x, nextY, maxWidth, maxY)
   tb.resetAttributes()
   return nextY
 
@@ -481,10 +526,12 @@ proc render() =
   nextY = renderFilter(tb, 1, nextY, terminalWidth() - 4 )
 
   let maxWidth = getMaxColumnContentWidth()
-  discard renderDestinationDirectories(tb, getHalfWidth() + 3, nextY, maxWidth)
+  let rightColumnX = getHalfWidth() + 3
+  discard renderDestinationDirectories(tb, rightColumnX, nextY, maxWidth)
 
   nextY = renderSourceDirectories(tb, 2, nextY, maxWidth)
-  nextY = renderSourceFiles(tb, 2, nextY, maxWidth)
+  discard renderSourceFiles(tb, 2, nextY, maxWidth)
+  discard renderDestinationFiles(tb, rightColumnX, nextY, maxWidth)
 
   tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 
