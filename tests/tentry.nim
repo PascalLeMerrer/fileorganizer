@@ -33,3 +33,11 @@ suite "Entry selection":
     let entries : seq[Entry] = @[e("a"), e("b"), e("c"), e("d")]
     let expected : seq[Entry] = @[e("a", selected=true), e("b"), e("c"), e("d")]
     check(entry.selectFirst(entries) == expected)
+
+  test "getSelectedItemIndex returns the position of the first selected entry in the sequence":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c", selected=true), e("d")]
+    check(entry.getSelectedItemIndex(entries) == 2)
+
+  test "getSelectedItemIndex returns -1 where there is no selected entry in the sequence":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c"), e("d")]
+    check(entry.getSelectedItemIndex(entries) == -1)

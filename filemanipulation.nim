@@ -366,10 +366,19 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, ma
 proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int, maxY: int): int =
 
   var currentY = y
+  var startIndex = 0
+  var maxVisibleEntryCount = maxY - y
 
-  for index, directory in entries:
+  if currentY + entries.len >= maxY:
+    # scrolling required
+    let selectedItemIndex = entry.getSelectedItemIndex(entries)
+    if currentY + selectedItemIndex >= maxY:
+      startIndex = selectedItemIndex - (maxY - currentY) + 1
+  var maxVisibleIndex = startIndex + maxVisibleEntryCount - 1
+  for index in startIndex..maxVisibleIndex:
+    let directory = entries[index]
+
     inc currentY
-
     if currentY > maxY:
       break # avoid vertical overflow
 
@@ -388,13 +397,14 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
 
 proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
+
+
   let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   var title = " Source: " & state.sourceDirectoryPath.lastPathPart
   if title.len > maxWidth:
     title = title[0..maxWidth-3] & "..."
-
   tb.write(x, nextY, title)
   tb.resetAttributes()
   nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth, maxY=yLimitBetweenDirAndFiles - 1 )

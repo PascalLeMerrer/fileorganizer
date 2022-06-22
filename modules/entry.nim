@@ -18,6 +18,13 @@ func unselect*(entry: Entry): Entry =
 func isAnySelected*(entries: seq[Entry]): bool =
   return sequtils.any(entries, func (entry:Entry):bool = return entry.selected)
 
+func getSelectedItemIndex*(entries:seq[Entry]):int =
+  # return the rank of the selected entry, or -1 if no enry is selected
+  for index, entry in entries:
+    if entry.selected:
+      return index
+  return -1
+
 func selectFirst*(entries: seq[Entry]): seq[Entry] =
   if entries.len == 0:
     return entries
