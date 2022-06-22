@@ -5,6 +5,7 @@ import std/strformat
 import std/tables
 import std/unicode
 import modules/[entry, file]
+import std/sugar # for dump
 
 # TODO
 # scroll when content is high than container
@@ -344,12 +345,22 @@ proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   inc nextY
   return nextY
 
-proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int): int =
-
-  var currentY = y
+proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int, maxY: int): int =
 
   let maxDigitsForIndex = ($len(entries)).len
-  for index, fileEntry in entries:
+  var currentY = y
+  var startIndex = 0
+  let maxVisibleEntryCount = maxY - y
+
+  if currentY + entries.len >= maxY:
+    # scrolling required
+    let selectedItemIndex = entry.getSelectedItemIndex(entries)
+    if currentY + selectedItemIndex >= maxY:
+      startIndex = selectedItemIndex - (maxY - currentY) + 1
+  var maxVisibleIndex = min(entries.len - 1, startIndex + maxVisibleEntryCount - 1)
+
+  for index in startIndex..maxVisibleIndex:
+    let fileEntry = entries[index]
     inc currentY
     if fileEntry.selected:
       tb.setBackgroundColor(BackgroundColor.bgBlack)
@@ -367,14 +378,15 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
 
   var currentY = y
   var startIndex = 0
-  var maxVisibleEntryCount = maxY - y
+  let maxVisibleEntryCount = maxY - y
 
   if currentY + entries.len >= maxY:
     # scrolling required
     let selectedItemIndex = entry.getSelectedItemIndex(entries)
     if currentY + selectedItemIndex >= maxY:
       startIndex = selectedItemIndex - (maxY - currentY) + 1
-  var maxVisibleIndex = startIndex + maxVisibleEntryCount - 1
+  var maxVisibleIndex = min(entries.len - 1, startIndex + maxVisibleEntryCount - 1)
+
   for index in startIndex..maxVisibleIndex:
     let directory = entries[index]
 
@@ -434,8 +446,8 @@ proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): i
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
   tb.write(2, nextY, " Files ")
-  inc nextY
-  nextY = renderFiles(tb, state.filteredSourceFiles, 2, nextY, maxWidth)
+  let maxY = terminalHeight() - 4
+  nextY = renderFiles(tb, state.filteredSourceFiles, 2, nextY, maxWidth, maxY)
   tb.resetAttributes()
   return nextY
 
