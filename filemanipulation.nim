@@ -14,7 +14,6 @@ import modules/[entry, file]
 # Move all command (A)
 # Undo command
 # Integrated Help (H)
-# Clear filter command (C)
 # highlight moved files in dest dir
 
 
@@ -209,6 +208,10 @@ proc updateSourceDirectoriesView() =
       state.sourceDirectoryPath = file.getSelectedDirectoryPath(
           state.sourceDirectoryPath, state.sourceSubDirectories)
       loadSourceDirectoryContent()
+    of Key.C:
+      state.filter = ""
+      loadSourceDirectoryContent()
+      loadDestinationDirectoryContent()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
@@ -233,6 +236,10 @@ proc updateDestinationDirectoriesView() =
       state.destinationDirectoryPath = file.getSelectedDirectoryPath(
           state.destinationDirectoryPath, state.destinationSubDirectories)
       loadDestinationDirectoryContent()
+    of Key.C:
+      state.filter = ""
+      loadSourceDirectoryContent()
+      loadDestinationDirectoryContent()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
@@ -253,6 +260,10 @@ proc updateSourceFilesView() =
       state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
     of Key.Up:
       state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
+    of Key.C:
+      state.filter = ""
+      loadSourceDirectoryContent()
+      loadDestinationDirectoryContent()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
