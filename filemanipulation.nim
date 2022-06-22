@@ -8,7 +8,6 @@ import modules/[entry, file]
 import std/sugar # for dump
 
 # TODO
-# diplay files in destination dir
 # Move command
 # Move all command (A)
 # Undo command
@@ -22,6 +21,7 @@ import std/sugar # for dump
 
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
+const leftColumnX = 2
 
 let characters = {
   Key.Space: " ",
@@ -441,8 +441,6 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
 
 proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
-
-
   let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
@@ -477,9 +475,9 @@ proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): i
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
-  tb.write(2, nextY, " Source files ")
+  tb.write(leftColumnX, nextY, " Source files ")
   let maxY = terminalHeight() - 4
-  nextY = renderFiles(tb, state.filteredSourceFiles, 2, nextY, maxWidth, maxY)
+  nextY = renderFiles(tb, state.filteredSourceFiles, leftColumnX, nextY, maxWidth, maxY)
   tb.resetAttributes()
   return nextY
 
@@ -502,8 +500,7 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
 
     # middle vertical separation
     let x = getHalfWidth() + 1
-    bb.drawVertLine(x, 2, terminalHeight() - 3)
-
+    bb.drawVertLine(x, leftColumnX, terminalHeight() - 3)
 
     # separator between directories and files
     bb.drawHorizLine(x1=0, x2=terminalWidth(), y=yLimitBetweenDirAndFiles)
@@ -529,11 +526,11 @@ proc render() =
   let rightColumnX = getHalfWidth() + 3
   discard renderDestinationDirectories(tb, rightColumnX, nextY, maxWidth)
 
-  nextY = renderSourceDirectories(tb, 2, nextY, maxWidth)
-  discard renderSourceFiles(tb, 2, nextY, maxWidth)
+  nextY = renderSourceDirectories(tb, leftColumnX, nextY, maxWidth)
+  discard renderSourceFiles(tb, leftColumnX, nextY, maxWidth)
   discard renderDestinationFiles(tb, rightColumnX, nextY, maxWidth)
 
-  tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
+  tb.write(leftColumnX, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 
   tb.display()
 
