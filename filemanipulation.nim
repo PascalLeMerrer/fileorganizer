@@ -2,6 +2,7 @@ import illwill
 import system
 import std/os
 import std/strformat
+import std/tables
 import std/unicode
 import modules/[entry, file]
 
@@ -15,10 +16,107 @@ import modules/[entry, file]
 # Integrated Help (H)
 # Clear filter command (C)
 # highlight moved files in dest dir
-# extend the chars supported by the filter
 
 
 const rightArrow = $Rune(0x2192)
+
+let characters = {
+  Key.Space: " ",
+  Key.ExclamationMark: "!",
+  Key.DoubleQuote: "\"",
+  Key.Hash: "#",
+  Key.Dollar: "$",
+  Key.Percent: "%",
+  Key.Ampersand: "&",
+  Key.SingleQuote: "'",
+  Key.LeftParen: "(",
+  Key.RightParen: ")",
+  Key.Asterisk: "*",
+  Key.Plus: "+",
+  Key.Comma: ",",
+  Key.Minus: "-",
+  Key.Dot: ".",
+  Key.Slash: "/",
+  Key.Zero: "0",
+  Key.One: "1",
+  Key.Two: "2",
+  Key.Three: "3",
+  Key.Four: "4",
+  Key.Five: "5",
+  Key.Six: "6",
+  Key.Seven: "7",
+  Key.Eight: "8",
+  Key.Nine: "9",
+  Key.Colon: ":",
+  Key.Semicolon: ";",
+  Key.LessThan: "<",
+  Key.Equals: "=",
+  Key.GreaterThan: ">",
+  Key.QuestionMark: "?",
+  Key.At: "@",
+  Key.ShiftA: "A",
+  Key.ShiftB: "B",
+  Key.ShiftC: "C",
+  Key.ShiftD: "D",
+  Key.ShiftE: "E",
+  Key.ShiftF: "F",
+  Key.ShiftG: "G",
+  Key.ShiftH: "H",
+  Key.ShiftI: "I",
+  Key.ShiftJ: "J",
+  Key.ShiftK: "K",
+  Key.ShiftL: "L",
+  Key.ShiftM: "M",
+  Key.ShiftN: "N",
+  Key.ShiftO: "O",
+  Key.ShiftP: "P",
+  Key.ShiftQ: "Q",
+  Key.ShiftR: "R",
+  Key.ShiftS: "S",
+  Key.ShiftT: "T",
+  Key.ShiftU: "U",
+  Key.ShiftV: "V",
+  Key.ShiftW: "W",
+  Key.ShiftX: "X",
+  Key.ShiftY: "Y",
+  Key.ShiftZ: "Z",
+  Key.LeftBracket: "[",
+  Key.Backslash: "\"",
+  Key.RightBracket: "]",
+  Key.Caret: "^",
+  Key.Underscore: "_",
+  Key.GraveAccent: "`",
+  Key.A: "a",
+  Key.B: "b",
+  Key.C: "c",
+  Key.D: "d",
+  Key.E: "e",
+  Key.F: "f",
+  Key.G: "g",
+  Key.H: "h",
+  Key.I: "i",
+  Key.J: "j",
+  Key.K: "k",
+  Key.L: "l",
+  Key.M: "m",
+  Key.N: "n",
+  Key.O: "o",
+  Key.P: "p",
+  Key.Q: "q",
+  Key.R: "r",
+  Key.S: "s",
+  Key.T: "t",
+  Key.U: "u",
+  Key.V: "v",
+  Key.W: "w",
+  Key.X: "x",
+  Key.Y: "y",
+  Key.Z: "z",
+  Key.LeftBrace: "{",
+  Key.Pipe: "|",
+  Key.RightBrace: "}",
+  Key.Tilde: "~"
+}.toTable
 
 type View = enum
   DestinationSelection,
@@ -178,13 +276,11 @@ proc updateFilteringView() =
   of Key.Backspace:
     if state.filter.len > 0:
       state.filter = state.filter[0 .. ^2]
-  of Key.Space:
-    state.filter.add(" ")
   of Key.Tab:
     focusNextZone()
   else:
-    if key >= Key.A and key <= Key.Z:
-      state.filter.add(($key).toLower())
+    if key in characters:
+      state.filter.add(characters[key])
 
 
 proc update() =
