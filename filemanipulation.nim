@@ -5,7 +5,18 @@ import std/strformat
 import std/unicode
 import modules/[entry, file]
 
-const checkSymbol = $Rune(0x2705)
+# TODO
+# display the name/path of the current dirs
+# scroll when content is high than container
+# display separation lines between dirs and files
+# diplay files in destination dir
+# Move command
+# Move all command (A)
+# Undo command
+# Integrated Help (H)
+# Clear filter command (C)
+
+
 const rightArrow = $Rune(0x2192)
 
 type View = enum
@@ -37,7 +48,11 @@ var state = State(
     destinationDirectoryPath: getHomeDir()
   )
 
-let rightColumnX = int(terminalWidth() / 2)
+proc getHalfWidth(): int =
+  int(terminalWidth() / 2) - 1
+
+proc getMaxColumnContentWidth():int =
+  getHalfWidth() - 3
 
 proc exitProc() {.noconv.} =
   illwillDeinit()
@@ -185,7 +200,7 @@ func formatIndex*(index: int, width: int): string =
   else:
     return $index
 
-proc renderFilter(tb: var TerminalBuffer, x: int, y: int): int =
+proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
 
   let bgColor = if state.focus == Filtering: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
@@ -195,16 +210,18 @@ proc renderFilter(tb: var TerminalBuffer, x: int, y: int): int =
   var filter = state.filter
   if state.focus == Filtering:
     filter.add("|")
+  if filter.len > maxWidth - 10:
+    filter = filter[0..maxWidth-11]
 
   tb.write(x + 1, nextY, " Filter ")
   tb.resetAttributes()
   tb.write(x+10, nextY, filter)
+
   inc nextY
-  tb.drawHorizLine(x, terminalWidth() - 2, nextY)
   inc nextY
   return nextY
 
-proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
+proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int): int =
 
   var currentY = y
 
@@ -217,11 +234,13 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): i
     else:
       tb.resetAttributes()
     let selectionSymbol = if fileEntry.selected: rightArrow else: " "
-    let line = selectionSymbol & " " & formatIndex(index + 1, maxDigitsForIndex) & " " & fileEntry.name
+    var line = selectionSymbol & " " & formatIndex(index + 1, maxDigitsForIndex) & " " & fileEntry.name
+    if line.len > maxWidth:
+      line = line[0..maxWidth-1]
     tb.write(x, currentY, line)
   return currentY + 1
 
-proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int): int =
+proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int): int =
 
   var currentY = y
 
@@ -233,35 +252,37 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
     else:
       tb.resetAttributes()
     let selectionSymbol = if directory.selected: rightArrow else: " "
-    let line = selectionSymbol & " " & directory.name
-
+    var line = selectionSymbol & " " & directory.name
+    if line.len > maxWidth:
+      line = line[0..maxWidth-1]
     tb.write(x, currentY, line)
 
   return currentY + 1
 
-proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int): int =
+proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
   let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   tb.write(x, nextY, " Source directory")
   tb.resetAttributes()
-  nextY = tb.renderDirectories(state.sourceSubDirectories, x, nextY)
+  nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth)
   inc nextY
   return nextY
 
-proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int): int =
+proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
   let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   tb.write(x, nextY, " Destination directory")
   tb.resetAttributes()
-  nextY = tb.renderDirectories(state.destinationSubDirectories, rightColumnX, nextY)
+
+  nextY = renderDirectories(tb, state.destinationSubDirectories, x, nextY, maxWidth)
   inc nextY
   return nextY
 
-proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int): int =
+proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
 
   let bgColor = if state.focus == FileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
@@ -270,22 +291,40 @@ proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int): int =
 
   tb.write(2, nextY, " Files ")
   inc nextY
-  nextY = tb.renderFiles(state.filteredSourceFiles, 2, nextY)
+  nextY = renderFiles(tb, state.filteredSourceFiles, 2, nextY, maxWidth)
   tb.resetAttributes()
   return nextY
 
+proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
+    tb.setForegroundColor(ForegroundColor.fgYellow)
+    bb.drawRect(0, 0, tb.width-1, tb.height-1)
+
+    # middle vertical separation
+    let x = getHalfWidth() + 1
+    bb.drawVertLine(x, 2, terminalHeight() - 3)
+
+    # filter input box
+    bb.drawRect(0, 0, terminalWidth(), 2)
+
+    # footer box
+    bb.drawRect(0, terminalHeight() - 3, terminalWidth(), terminalHeight())
+
+    tb.write(bb)
+
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-
-  tb.setForegroundColor(ForegroundColor.fgYellow)
-  tb.drawRect(0, 0, tb.width-1, tb.height-1)
+  var bb = newBoxBuffer(tb.width, tb.height)
+  renderGrid(tb, bb)
 
   var nextY: int = 1
-  nextY = tb.renderFilter(1, nextY)
-  discard tb.renderDestinationDirectories(rightColumnX, nextY)
 
-  nextY = renderSourceDirectories(tb, 2, nextY)
-  nextY = renderSourceFiles(tb, 2, nextY)
+  nextY = renderFilter(tb, 1, nextY, terminalWidth() - 4 )
+
+  let maxWidth = getMaxColumnContentWidth()
+  discard renderDestinationDirectories(tb, getHalfWidth() + 3, nextY, maxWidth)
+
+  nextY = renderSourceDirectories(tb, 2, nextY, maxWidth)
+  nextY = renderSourceFiles(tb, 2, nextY, maxWidth)
 
   tb.write(2, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
 
