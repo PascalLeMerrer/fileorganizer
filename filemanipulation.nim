@@ -14,6 +14,8 @@ import modules/[entry, file]
 # Undo command
 # Integrated Help (H)
 # Clear filter command (C)
+# highlight moved files in dest dir
+# extend the chars supported by the filter
 
 
 const rightArrow = $Rune(0x2192)
@@ -109,10 +111,14 @@ proc updateSourceDirectoriesView() =
       state.sourceDirectoryPath = file.getSelectedDirectoryPath(
           state.sourceDirectoryPath, state.sourceSubDirectories)
       loadSourceDirectoryContent()
+    of Key.D:
+      state.focus = DestinationSelection
     of Key.Escape, Key.Q:
       exitProc()
     of Key.F:
       state.focus = Filtering
+    of Key.S:
+      state.focus = SourceSelection
     of Key.Tab:
       focusNextZone()
     else:
@@ -129,10 +135,14 @@ proc updateDestinationDirectoriesView() =
       state.destinationDirectoryPath = file.getSelectedDirectoryPath(
           state.destinationDirectoryPath, state.destinationSubDirectories)
       loadDestinationDirectoryContent()
+    of Key.D:
+      state.focus = DestinationSelection
     of Key.Escape, Key.Q:
       exitProc()
     of Key.F:
       state.focus = Filtering
+    of Key.S:
+      state.focus = SourceSelection
     of Key.Tab:
       focusNextZone()
     else:
@@ -145,10 +155,14 @@ proc updateSourceFilesView() =
       state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
     of Key.Up:
       state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
+    of Key.D:
+      state.focus = DestinationSelection
     of Key.Escape, Key.Q:
       exitProc()
     of Key.F:
       state.focus = Filtering
+    of Key.S:
+      state.focus = SourceSelection
     of Key.Tab:
       focusNextZone()
     else:
