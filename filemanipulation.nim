@@ -178,6 +178,8 @@ proc updateFilteringView() =
   of Key.Backspace:
     if state.filter.len > 0:
       state.filter = state.filter[0 .. ^2]
+  of Key.Space:
+    state.filter.add(" ")
   of Key.Tab:
     focusNextZone()
   else:
