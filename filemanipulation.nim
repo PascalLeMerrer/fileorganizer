@@ -6,7 +6,6 @@ import std/unicode
 import modules/[entry, file]
 
 # TODO
-# display the name/path of the current dirs
 # scroll when content is high than container
 # display separation lines between dirs and files
 # diplay files in destination dir
@@ -264,7 +263,11 @@ proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: i
   let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(x, nextY, " Source directory")
+  var title = " Source: " & state.sourceDirectoryPath.lastPathPart
+  if title.len > maxWidth:
+    title = title[0..maxWidth-3] & "..."
+
+  tb.write(x, nextY, title)
   tb.resetAttributes()
   nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth)
   inc nextY
@@ -275,7 +278,10 @@ proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int, maxWid
   let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  tb.write(x, nextY, " Destination directory")
+  var title = " Destination: " & state.destinationDirectoryPath.lastPathPart
+  if title.len > maxWidth:
+    title = title[0..maxWidth-3] & "..."
+  tb.write(x, nextY, title)
   tb.resetAttributes()
 
   nextY = renderDirectories(tb, state.destinationSubDirectories, x, nextY, maxWidth)
