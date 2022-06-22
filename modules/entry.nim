@@ -2,6 +2,7 @@ import std/sequtils
 import std/strutils
 import std/unicode
 import std/unidecode
+from std/os import Pardir
 
 type
   Entry* = object
@@ -94,6 +95,9 @@ proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
       result.add(entry)
 
 
-
-
-
+func cmp*(x: Entry, y: Entry): int =
+  if x.path == ParDir:
+    return -1
+  if y.path == ParDir:
+    return 1
+  return cmp(x.name.toLower, y.name.toLower)
