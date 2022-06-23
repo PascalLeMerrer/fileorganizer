@@ -9,9 +9,8 @@ from std/sugar import dump
 import std/options
 
 # TODO
-# Move all command (A)
-# undo command which modified multiple files
 # Integrated Help (H)
+# Delete file
 # highlight moved files in dest dir
 # select file by number
 # CTRL+UP to go to the first item
@@ -22,6 +21,8 @@ import std/options
 # Display file size
 # Display last modification date of files
 # Rename files
+# Move all command (A)
+# undo command which modified multiple files
 
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
@@ -125,7 +126,7 @@ let characters = {
   Key.Tilde: "~"
 }.toTable
 
-type View = enum
+type FocusZone = enum
   DestinationFileSelection
   DestinationSelection,
   Filtering,
@@ -142,7 +143,7 @@ type
     filter: string
     filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
-    focus: View            # the part of the screen with the focus
+    focus: FocusZone            # the part of the screen with the focus
     sourceDirectoryPath: string
     destinationDirectoryPath: string
     destinationSubDirectories: seq[Entry] # the directories into the current destination directory
@@ -517,6 +518,19 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
 
   tb.write(bb)
 
+proc renderHelp(tb: var TerminalBuffer, x: int, y:int)=
+  case state.focus
+  of DestinationSelection, DestinationFileSelection, SourceSelection, SourceFileSelection:
+    tb.write(x, y,
+      bgWhite, fgBlack, "TAB", resetStyle, " focus next zone ",
+      bgWhite, fgBlack, "F", resetStyle, " edit filter ",
+      bgWhite, fgBlack, "M", resetStyle, " move selected file ",
+      bgWhite, fgBlack, "C", resetStyle, " clear filter ",
+      bgWhite, fgBlack, "Q", resetStyle, " quit ",
+      )
+  of Filtering:
+    tb.write(x, y, "Press ", bgWhite, fgBlack, "Esc", resetStyle, " to exit filter edition")
+
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
   var bb = newBoxBuffer(tb.width, tb.height)
@@ -534,7 +548,7 @@ proc render() =
   discard renderSourceFiles(tb, leftColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
   discard renderDestinationFiles(tb, rightColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
 
-  tb.write(leftColumnX, tb.height - 2, "Press Q, Esc or Ctrl-C to quit")
+  renderHelp(tb, leftColumnX, tb.height - 2)
 
   tb.display()
 
