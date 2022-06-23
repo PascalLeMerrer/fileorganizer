@@ -235,6 +235,11 @@ proc processGlobalKeyPress(key: Key) =
       state.focus = SourceSelection
     of Key.Tab:
       focusNextZone()
+    of Key.U:
+      if state.commands.len > 0:
+        let lastExecutedCommand = state.commands[^1]
+        lastExecutedCommand.undo()
+        reload()
     else:
       discard
     if key != Key.None:
@@ -288,11 +293,6 @@ proc updateSourceFilesView() =
       reload()
     else:
       state.error = "ERROR: Move command failed because no file is selected."
-  of Key.U:
-    if state.commands.len > 0:
-      let lastExecutedCommand = state.commands[^1]
-      lastExecutedCommand.undo()
-      reload()
   else:
     processGlobalKeyPress(key)
 
