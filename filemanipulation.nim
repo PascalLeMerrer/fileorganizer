@@ -187,6 +187,10 @@ proc loadDestinationDirectoryContent() =
   let filteredFiles = filter(files, state.filter)
   state.filteredDestinationFiles = selectFirst(filteredFiles)
 
+proc reload() =
+  loadSourceDirectoryContent()
+  loadDestinationDirectoryContent()
+
 proc focusNextZone() =
   # todo use a map
   case state.focus
@@ -205,8 +209,7 @@ proc init() =
   illwillInit(fullscreen = true)
   setControlCHook(exitProc)
   hideCursor()
-  loadSourceDirectoryContent()
-  loadDestinationDirectoryContent()
+  reload()
 
 proc updateSourceDirectoriesView() =
     let key = getKey()
@@ -221,8 +224,7 @@ proc updateSourceDirectoriesView() =
       loadSourceDirectoryContent()
     of Key.C:
       state.filter = ""
-      loadSourceDirectoryContent()
-      loadDestinationDirectoryContent()
+      reload()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
@@ -249,8 +251,7 @@ proc updateDestinationDirectoriesView() =
       loadDestinationDirectoryContent()
     of Key.C:
       state.filter = ""
-      loadSourceDirectoryContent()
-      loadDestinationDirectoryContent()
+      reload()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
@@ -273,8 +274,7 @@ proc updateSourceFilesView() =
       state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
     of Key.C:
       state.filter = ""
-      loadSourceDirectoryContent()
-      loadDestinationDirectoryContent()
+      reload()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
@@ -287,8 +287,7 @@ proc updateSourceFilesView() =
         let command = MoveCommand(file: selectedFile.get(), directory: state.destinationDirectoryPath)
         command.execute()
         state.commands.add(command)
-        loadSourceDirectoryContent()
-        loadDestinationDirectoryContent()
+        reload()
       else:
         # TODO display error
         discard
@@ -298,8 +297,7 @@ proc updateSourceFilesView() =
       if state.commands.len > 0:
         let lastExecutedCommand = state.commands[^1]
         lastExecutedCommand.undo()
-        loadSourceDirectoryContent()
-        loadDestinationDirectoryContent()
+        reload()
     of Key.Tab:
       focusNextZone()
     else:
@@ -315,8 +313,7 @@ proc updateDestinationFilesView() =
       state.filteredDestinationFiles = entry.selectPrevious(state.filteredDestinationFiles)
     of Key.C:
       state.filter = ""
-      loadSourceDirectoryContent()
-      loadDestinationDirectoryContent()
+      reload()
     of Key.D:
       state.focus = DestinationSelection
     of Key.Escape, Key.Q:
@@ -359,8 +356,7 @@ proc update() =
     updateDestinationFilesView()
   of Filtering:
     updateFilteringView()
-    loadSourceDirectoryContent()
-    loadDestinationDirectoryContent()
+    reload()
 
 func formatIndex*(index: int, width: int): string =
   # formatting string cannot be defined dynamically
