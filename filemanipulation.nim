@@ -9,7 +9,9 @@ from std/sugar import dump
 import std/options
 
 # TODO
+# display error messages
 # Integrated Help (H)
+# move files from destination to source
 # Delete file
 # highlight moved files in dest dir
 # select file by number
@@ -140,6 +142,7 @@ type
 type
   State = object
     commands: seq[Command] # the last command, which may by canceled
+    error: string
     filter: string
     filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
@@ -151,6 +154,7 @@ type
 
 
 var state = State(
+    error: "",
     filter: "",
     focus: SourceSelection,
     sourceDirectoryPath: getHomeDir(),
@@ -235,6 +239,8 @@ proc processGlobalKeyPress(key: Key) =
       focusNextZone()
     else:
       discard
+    if key != Key.None:
+      state.error = ""
 
 proc updateSourceDirectoriesView() =
   let key = getKey()
@@ -283,8 +289,7 @@ proc updateSourceFilesView() =
       state.commands.add(command)
       reload()
     else:
-      # TODO display error
-      discard
+      state.error = "ERROR: Move command failed because no file is selected."
   of Key.U:
     if state.commands.len > 0:
       let lastExecutedCommand = state.commands[^1]
@@ -531,6 +536,9 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y:int)=
   of Filtering:
     tb.write(x, y, "Press ", bgWhite, fgBlack, "Esc", resetStyle, " to exit filter edition")
 
+proc renderError(tb: var TerminalBuffer, x: int, y:int, msg:string)=
+  tb.write(x, y, bgRed, fgWhite, msg)
+
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
   var bb = newBoxBuffer(tb.width, tb.height)
@@ -548,7 +556,10 @@ proc render() =
   discard renderSourceFiles(tb, leftColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
   discard renderDestinationFiles(tb, rightColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
 
-  renderHelp(tb, leftColumnX, tb.height - 2)
+  if state.error == "":
+    renderHelp(tb, leftColumnX, tb.height - 2)
+  else:
+    renderError(tb, leftColumnX, tb.height - 2, state.error)
 
   tb.display()
 
