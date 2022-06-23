@@ -9,7 +9,6 @@ from std/sugar import dump
 import std/options
 
 # TODO
-# display error messages
 # Integrated Help (H)
 # move files from destination to source
 # Delete file
@@ -151,7 +150,6 @@ type
     destinationDirectoryPath: string
     destinationSubDirectories: seq[Entry] # the directories into the current destination directory
     filteredDestinationFiles: seq[Entry] # the files in the current destination dir matching the current filter
-
 
 var state = State(
     error: "",
@@ -525,7 +523,14 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
 
 proc renderHelp(tb: var TerminalBuffer, x: int, y:int)=
   case state.focus
-  of DestinationSelection, DestinationFileSelection, SourceSelection, SourceFileSelection:
+  of DestinationSelection, SourceSelection:
+    tb.write(x, y,
+      bgWhite, fgBlack, "TAB", resetStyle, " focus next zone ",
+      bgWhite, fgBlack, "F", resetStyle, " edit filter ",
+      bgWhite, fgBlack, "C", resetStyle, " clear filter ",
+      bgWhite, fgBlack, "Q", resetStyle, " quit ",
+      )
+  of DestinationFileSelection, SourceFileSelection:
     tb.write(x, y,
       bgWhite, fgBlack, "TAB", resetStyle, " focus next zone ",
       bgWhite, fgBlack, "F", resetStyle, " edit filter ",
