@@ -4,15 +4,12 @@ import std/os
 import std/strformat
 import std/tables
 import std/unicode
-import modules/[entry, file]
-import std/sugar # for dump
+import modules/[commands, entry, file]
+from std/sugar import dump
 import std/options
 
 # TODO
-# Refactor Move command
-# m'assurer que Entry.path et Entry.name contiennent les caractères originaux
 # Move all command (A)
-# Undo command
 # Integrated Help (H)
 # highlight moved files in dest dir
 # select file by number

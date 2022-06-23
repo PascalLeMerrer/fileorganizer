@@ -1,31 +1,15 @@
 import std/options
+import std/os
 import std/sequtils
 import std/strutils
 import std/unicode
 import std/unidecode
-from std/os import Pardir, DirSep
+
 type
   Entry* = object
     name*: string
     path*: string
     selected*: bool
-
-# TODO move to file.nim or commands.nim
-type Command* = ref object of RootObj
-  file*: Entry
-  directory*: string
-method execute*(this: Command) {.base.} =
-  discard
-method undo*(this: Command) {.base.} =
-  discard
-
-type MoveCommand* = ref object of Command
-method execute(this: MoveCommand) =
-  let destinationPath = this.directory & DirSep & this.file.name
-  os.moveFile(this.file.path, destinationPath)
-method undo(this: MoveCommand) =
-  let currentPath = this.directory & DirSep & this.file.name
-  os.moveFile(currentPath, this.file.path)
 
 func select*(entry: Entry): Entry =
   return Entry(name: entry.name, path: entry.path, selected: true)
@@ -120,8 +104,10 @@ proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
 
 
 func cmp*(x: Entry, y: Entry): int =
-  if x.path == ParDir:
+  # Comparison function for sorting entries in alphabetical order, ignoring the case
+  # The ".." dir, if present, is always first
+  if x.path == os.ParDir:
     return -1
-  if y.path == ParDir:
+  if y.path == os.ParDir:
     return 1
   return cmp(x.name.toLower, y.name.toLower)
