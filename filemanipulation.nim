@@ -9,7 +9,8 @@ import std/sugar # for dump
 import std/options
 
 # TODO
-# Move command
+# Refactor Move command
+# m'assurer que Entry.path et Entry.name contiennent les caractères originaux
 # Move all command (A)
 # Undo command
 # Integrated Help (H)
@@ -19,7 +20,10 @@ import std/options
 # CTRL+DOWN to go to the last item
 # scrollbar
 # remove all magic numbers
-# R for relaod/refresh
+# R for reload/refresh
+# O for opening file
+# Display file size
+# Display last modification date of files
 
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
