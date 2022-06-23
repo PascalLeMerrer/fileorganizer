@@ -10,6 +10,7 @@ import std/options
 
 # TODO
 # Move all command (A)
+# undo command which modified multiple files
 # Integrated Help (H)
 # highlight moved files in dest dir
 # select file by number
@@ -17,10 +18,10 @@ import std/options
 # CTRL+DOWN to go to the last item
 # scrollbar
 # remove all magic numbers
-# R for reload/refresh
 # O for opening file
 # Display file size
 # Display last modification date of files
+# Rename files
 
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
@@ -530,4 +531,4 @@ main()
 
 when isMainModule:
   main()
-
+  
