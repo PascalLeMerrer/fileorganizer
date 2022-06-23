@@ -18,16 +18,16 @@ func unselect*(entry: Entry): Entry =
   return Entry(name: entry.name, path: entry.path, selected: false)
 
 func isAnySelected*(entries: seq[Entry]): bool =
-  return sequtils.any(entries, func (entry:Entry):bool = return entry.selected)
+  return sequtils.any(entries, func (entry: Entry): bool = return entry.selected)
 
-func getSelectedItemIndex*(entries:seq[Entry]):int =
+func getSelectedItemIndex*(entries: seq[Entry]): int =
   # return the rank of the selected entry, or -1 if no enry is selected
   for index, entry in entries:
     if entry.selected:
       return index
   return -1
 
-func getSelectedItem*(entries:seq[Entry]):Option[Entry] =
+func getSelectedItem*(entries: seq[Entry]): Option[Entry] =
   # return the selected entry
   for index, entry in entries:
     if entry.selected:

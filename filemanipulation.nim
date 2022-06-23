@@ -142,7 +142,7 @@ type
     filter: string
     filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
-    focus: View # the part of the screen with the focus
+    focus: View            # the part of the screen with the focus
     sourceDirectoryPath: string
     destinationDirectoryPath: string
     destinationSubDirectories: seq[Entry] # the directories into the current destination directory
@@ -159,7 +159,7 @@ var state = State(
 proc getHalfWidth(): int =
   int(terminalWidth() / 2) - 1
 
-proc getMaxColumnContentWidth():int =
+proc getMaxColumnContentWidth(): int =
   getHalfWidth() - 3
 
 proc exitProc() {.noconv.} =
@@ -178,11 +178,13 @@ proc loadSourceDirectoryContent() =
   state.filteredSourceFiles = selectFirst(filteredFiles)
 
 proc loadDestinationDirectoryContent() =
-  let destinationSubDirectories = file.getSubDirectories(state.destinationDirectoryPath)
+  let destinationSubDirectories = file.getSubDirectories(
+      state.destinationDirectoryPath)
   state.destinationSubDirectories = filter(destinationSubDirectories, state.filter)
   if not entry.isAnySelected(state.destinationSubDirectories):
     # the previously selected entry is excluded of selection
-    state.destinationSubDirectories = entry.selectFirst(state.destinationSubDirectories)
+    state.destinationSubDirectories = entry.selectFirst(
+        state.destinationSubDirectories)
 
   let files = file.getFiles(state.destinationDirectoryPath)
   let filteredFiles = filter(files, state.filter)
@@ -212,7 +214,7 @@ proc init() =
   hideCursor()
   reload()
 
-proc processGlobalKeyPress(key:Key)=
+proc processGlobalKeyPress(key: Key) =
   # execute the action linked to a keybard shortcut available in all focus zones except input fields
     case key
     of Key.C:
@@ -234,67 +236,73 @@ proc processGlobalKeyPress(key:Key)=
       discard
 
 proc updateSourceDirectoriesView() =
-    let key = getKey()
-    case key
-    of Key.Down:
-      state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
-    of Key.Up:
-      state.sourceSubDirectories = entry.selectPrevious(state.sourceSubDirectories)
-    of Key.Enter:
-      state.sourceDirectoryPath = file.getSelectedDirectoryPath(
-          state.sourceDirectoryPath, state.sourceSubDirectories)
-      loadSourceDirectoryContent()
-    else:
-      processGlobalKeyPress(key)
+  let key = getKey()
+  case key
+  of Key.Down:
+    state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
+  of Key.Up:
+    state.sourceSubDirectories = entry.selectPrevious(
+        state.sourceSubDirectories)
+  of Key.Enter:
+    state.sourceDirectoryPath = file.getSelectedDirectoryPath(
+        state.sourceDirectoryPath, state.sourceSubDirectories)
+    loadSourceDirectoryContent()
+  else:
+    processGlobalKeyPress(key)
 
 proc updateDestinationDirectoriesView() =
-    let key = getKey()
-    case key
-    of Key.Down:
-      state.destinationSubDirectories = entry.selectNext(state.destinationSubDirectories)
-    of Key.Up:
-      state.destinationSubDirectories = entry.selectPrevious(state.destinationSubDirectories)
-    of Key.Enter:
-      state.destinationDirectoryPath = file.getSelectedDirectoryPath(
-          state.destinationDirectoryPath, state.destinationSubDirectories)
-      loadDestinationDirectoryContent()
-    else:
-      processGlobalKeyPress(key)
+  let key = getKey()
+  case key
+  of Key.Down:
+    state.destinationSubDirectories = entry.selectNext(
+        state.destinationSubDirectories)
+  of Key.Up:
+    state.destinationSubDirectories = entry.selectPrevious(
+        state.destinationSubDirectories)
+  of Key.Enter:
+    state.destinationDirectoryPath = file.getSelectedDirectoryPath(
+        state.destinationDirectoryPath, state.destinationSubDirectories)
+    loadDestinationDirectoryContent()
+  else:
+    processGlobalKeyPress(key)
 
 proc updateSourceFilesView() =
-    let key = getKey()
-    case key
-    of Key.Down:
-      state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
-    of Key.Up:
-      state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
-    of Key.M:
-      let selectedFile = entry.getSelectedItem(state.filteredSourceFiles)
-      if selectedFile.isSome:
-        let command = MoveCommand(file: selectedFile.get(), directory: state.destinationDirectoryPath)
-        command.execute()
-        state.commands.add(command)
-        reload()
-      else:
-        # TODO display error
-        discard
-    of Key.U:
-      if state.commands.len > 0:
-        let lastExecutedCommand = state.commands[^1]
-        lastExecutedCommand.undo()
-        reload()
+  let key = getKey()
+  case key
+  of Key.Down:
+    state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
+  of Key.Up:
+    state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
+  of Key.M:
+    let selectedFile = entry.getSelectedItem(state.filteredSourceFiles)
+    if selectedFile.isSome:
+      let command = MoveCommand(file: selectedFile.get(),
+          directory: state.destinationDirectoryPath)
+      command.execute()
+      state.commands.add(command)
+      reload()
     else:
-      processGlobalKeyPress(key)
+      # TODO display error
+      discard
+  of Key.U:
+    if state.commands.len > 0:
+      let lastExecutedCommand = state.commands[^1]
+      lastExecutedCommand.undo()
+      reload()
+  else:
+    processGlobalKeyPress(key)
 
 proc updateDestinationFilesView() =
-    let key = getKey()
-    case key
-    of Key.Down:
-      state.filteredDestinationFiles = entry.selectNext(state.filteredDestinationFiles)
-    of Key.Up:
-      state.filteredDestinationFiles = entry.selectPrevious(state.filteredDestinationFiles)
-    else:
-      processGlobalKeyPress(key)
+  let key = getKey()
+  case key
+  of Key.Down:
+    state.filteredDestinationFiles = entry.selectNext(
+        state.filteredDestinationFiles)
+  of Key.Up:
+    state.filteredDestinationFiles = entry.selectPrevious(
+        state.filteredDestinationFiles)
+  else:
+    processGlobalKeyPress(key)
 
 
 proc updateFilteringView() =
@@ -344,7 +352,7 @@ func formatIndex*(index: int, width: int): string =
 proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
 
-  let bgColor = if state.focus == Filtering: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  let bgColor = if state.focus == Filtering: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
@@ -363,7 +371,8 @@ proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   inc nextY
   return nextY
 
-proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int, maxY: int): int =
+proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int,
+    maxWidth: int, maxY: int): int =
 
   let maxDigitsForIndex = ($len(entries)).len
   var currentY = y
@@ -386,13 +395,15 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, ma
     else:
       tb.resetAttributes()
     let selectionSymbol = if fileEntry.selected: rightArrow else: " "
-    var line = selectionSymbol & " " & formatIndex(index + 1, maxDigitsForIndex) & " " & fileEntry.name
+    var line = selectionSymbol & " " & formatIndex(index + 1,
+        maxDigitsForIndex) & " " & fileEntry.name
     if line.len > maxWidth:
       line = line[0..maxWidth-1]
     tb.write(x, currentY, line)
   return currentY + 1
 
-proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int, maxWidth: int, maxY: int): int =
+proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int,
+    y: int, maxWidth: int, maxY: int): int =
 
   var currentY = y
   var startIndex = 0
@@ -425,9 +436,10 @@ proc renderDirectories(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: i
 
   return currentY + 1
 
-proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
+proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int,
+    maxWidth: int): int =
   var nextY = y
-  let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   var title = " Source: " & state.sourceDirectoryPath.lastPathPart
@@ -435,13 +447,15 @@ proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: i
     title = title[0..maxWidth-3] & "..."
   tb.write(x, nextY, title)
   tb.resetAttributes()
-  nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth, maxY=yLimitBetweenDirAndFiles - 1 )
+  nextY = renderDirectories(tb, state.sourceSubDirectories, x, nextY, maxWidth,
+      maxY = yLimitBetweenDirAndFiles - 1)
   inc nextY
   return nextY
 
-proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
+proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int,
+    maxWidth: int): int =
   var nextY = y
-  let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
   var title = " Destination: " & state.destinationDirectoryPath.lastPathPart
@@ -450,27 +464,31 @@ proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int, maxWid
   tb.write(x, nextY, title)
   tb.resetAttributes()
 
-  nextY = renderDirectories(tb, state.destinationSubDirectories, x, nextY, maxWidth, maxY=yLimitBetweenDirAndFiles - 1)
+  nextY = renderDirectories(tb, state.destinationSubDirectories, x, nextY,
+      maxWidth, maxY = yLimitBetweenDirAndFiles - 1)
   inc nextY
   return nextY
 
-proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
+proc renderSourceFiles(tb: var TerminalBuffer, x: int, y: int,
+    maxWidth: int): int =
   var nextY = y
 
-  let bgColor = if state.focus == SourceFileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  let bgColor = if state.focus == SourceFileSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
   tb.write(leftColumnX, nextY, " Source files ")
   let maxY = terminalHeight() - 4
-  nextY = renderFiles(tb, state.filteredSourceFiles, leftColumnX, nextY, maxWidth, maxY)
+  nextY = renderFiles(tb, state.filteredSourceFiles, leftColumnX, nextY,
+      maxWidth, maxY)
   tb.resetAttributes()
   return nextY
 
-proc renderDestinationFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
+proc renderDestinationFiles(tb: var TerminalBuffer, x: int, y: int,
+    maxWidth: int): int =
   var nextY = y
 
-  let bgColor = if state.focus == DestinationFileSelection: BackgroundColor.bgGreen else:BackgroundColor.bgWhite
+  let bgColor = if state.focus == DestinationFileSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
@@ -481,23 +499,23 @@ proc renderDestinationFiles(tb: var TerminalBuffer, x: int, y: int, maxWidth: in
   return nextY
 
 proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
-    tb.setForegroundColor(ForegroundColor.fgYellow)
-    bb.drawRect(0, 0, tb.width-1, tb.height-1)
+  tb.setForegroundColor(ForegroundColor.fgYellow)
+  bb.drawRect(0, 0, tb.width-1, tb.height-1)
 
-    # middle vertical separation
-    let x = getHalfWidth() + 1
-    bb.drawVertLine(x, leftColumnX, terminalHeight() - 3)
+  # middle vertical separation
+  let x = getHalfWidth() + 1
+  bb.drawVertLine(x, leftColumnX, terminalHeight() - 3)
 
-    # separator between directories and files
-    bb.drawHorizLine(x1=0, x2=terminalWidth(), y=yLimitBetweenDirAndFiles)
+  # separator between directories and files
+  bb.drawHorizLine(x1 = 0, x2 = terminalWidth(), y = yLimitBetweenDirAndFiles)
 
-    # filter input box
-    bb.drawRect(0, 0, terminalWidth(), 2)
+  # filter input box
+  bb.drawRect(0, 0, terminalWidth(), 2)
 
-    # footer box
-    bb.drawRect(0, terminalHeight() - 3, terminalWidth(), terminalHeight())
+  # footer box
+  bb.drawRect(0, terminalHeight() - 3, terminalWidth(), terminalHeight())
 
-    tb.write(bb)
+  tb.write(bb)
 
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
@@ -506,7 +524,7 @@ proc render() =
 
   var nextY: int = 1
 
-  nextY = renderFilter(tb, 1, nextY, terminalWidth() - 4 )
+  nextY = renderFilter(tb, 1, nextY, terminalWidth() - 4)
 
   let maxWidth = getMaxColumnContentWidth()
   let rightColumnX = getHalfWidth() + 3
@@ -531,4 +549,3 @@ main()
 
 when isMainModule:
   main()
-  
