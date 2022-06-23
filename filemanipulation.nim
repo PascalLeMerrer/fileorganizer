@@ -9,13 +9,12 @@ from std/sugar import dump
 import std/options
 
 # TODO
+# CTRL+UP to go to the first item
+# CTRL+DOWN to go to the last item
 # Integrated Help (H)
-# move files from destination to source
 # Delete file
 # highlight moved files in dest dir
 # select file by number
-# CTRL+UP to go to the first item
-# CTRL+DOWN to go to the last item
 # scrollbar
 # remove all magic numbers
 # O for opening file
@@ -514,20 +513,20 @@ proc renderDestinationFiles(tb: var TerminalBuffer, x: int, y: int,
 
 proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
   tb.setForegroundColor(ForegroundColor.fgYellow)
-  bb.drawRect(0, 0, tb.width-1, tb.height-1)
+  bb.drawRect(0, 0, tb.width-1, tb.height-1, doubleStyle = true)
 
   # middle vertical separation
   let x = getHalfWidth() + 1
-  bb.drawVertLine(x, leftColumnX, terminalHeight() - 3)
+  bb.drawVertLine(x, leftColumnX, terminalHeight() - 3, doubleStyle = true)
 
   # separator between directories and files
-  bb.drawHorizLine(x1 = 0, x2 = terminalWidth(), y = yLimitBetweenDirAndFiles)
+  bb.drawHorizLine(x1 = 0, x2 = terminalWidth(), y = yLimitBetweenDirAndFiles, doubleStyle = true)
 
   # filter input box
-  bb.drawRect(0, 0, terminalWidth(), 2)
+  bb.drawRect(0, 0, terminalWidth(), 2, doubleStyle = true)
 
   # footer box
-  bb.drawRect(0, terminalHeight() - 3, terminalWidth(), terminalHeight())
+  bb.drawRect(0, terminalHeight() - 3, terminalWidth(), terminalHeight(), doubleStyle = true)
 
   tb.write(bb)
 
