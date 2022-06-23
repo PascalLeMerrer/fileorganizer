@@ -384,15 +384,16 @@ proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   tb.setForegroundColor(ForegroundColor.fgBlack)
 
   var filter = state.filter
-  if state.focus == Filtering:
-    filter.add("|")
   if filter.len > maxWidth - 10:
     filter = filter[0..maxWidth-11]
 
   tb.write(x + 1, nextY, " Filter ")
   tb.resetAttributes()
   tb.write(x+10, nextY, filter)
-
+  if state.focus == Filtering:
+    tb.setForegroundColor(ForegroundColor.fgRed)
+    tb.write(x + 10 + filter.len, nextY, "|")
+    tb.resetAttributes()
   inc nextY
   inc nextY
   return nextY
