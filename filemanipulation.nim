@@ -305,6 +305,16 @@ proc updateDestinationFilesView() =
   of Key.Up:
     state.filteredDestinationFiles = entry.selectPrevious(
         state.filteredDestinationFiles)
+  of Key.M:
+    let selectedFile = entry.getSelectedItem(state.filteredDestinationFiles)
+    if selectedFile.isSome:
+      let command = MoveCommand(file: selectedFile.get(),
+          directory: state.sourceDirectoryPath)
+      command.execute()
+      state.commands.add(command)
+      reload()
+    else:
+      state.error = "ERROR: Move command failed because no file is selected."
   else:
     processGlobalKeyPress(key)
 
