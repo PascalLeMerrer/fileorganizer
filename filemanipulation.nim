@@ -212,7 +212,7 @@ proc init() =
   reload()
 
 proc processGlobalKeyPress(key:Key)=
-  # execute the action linked to a keybard shortcut available in multiple focus zones
+  # execute the action linked to a keybard shortcut available in all focus zones except input fields
     case key
     of Key.C:
       state.filter = ""
@@ -223,6 +223,8 @@ proc processGlobalKeyPress(key:Key)=
       exitProc()
     of Key.F:
       state.focus = Filtering
+    of Key R:
+      reload()
     of Key.S:
       state.focus = SourceSelection
     of Key.Tab:
