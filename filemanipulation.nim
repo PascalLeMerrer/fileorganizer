@@ -211,17 +211,9 @@ proc init() =
   hideCursor()
   reload()
 
-proc updateSourceDirectoriesView() =
-    let key = getKey()
+proc processGlobalKeyPress(key:Key)=
+  # execute the action linked to a keybard shortcut available in multiple focus zones
     case key
-    of Key.Down:
-      state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
-    of Key.Up:
-      state.sourceSubDirectories = entry.selectPrevious(state.sourceSubDirectories)
-    of Key.Enter:
-      state.sourceDirectoryPath = file.getSelectedDirectoryPath(
-          state.sourceDirectoryPath, state.sourceSubDirectories)
-      loadSourceDirectoryContent()
     of Key.C:
       state.filter = ""
       reload()
@@ -237,6 +229,20 @@ proc updateSourceDirectoriesView() =
       focusNextZone()
     else:
       discard
+
+proc updateSourceDirectoriesView() =
+    let key = getKey()
+    case key
+    of Key.Down:
+      state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
+    of Key.Up:
+      state.sourceSubDirectories = entry.selectPrevious(state.sourceSubDirectories)
+    of Key.Enter:
+      state.sourceDirectoryPath = file.getSelectedDirectoryPath(
+          state.sourceDirectoryPath, state.sourceSubDirectories)
+      loadSourceDirectoryContent()
+    else:
+      processGlobalKeyPress(key)
 
 proc updateDestinationDirectoriesView() =
     let key = getKey()
@@ -249,21 +255,8 @@ proc updateDestinationDirectoriesView() =
       state.destinationDirectoryPath = file.getSelectedDirectoryPath(
           state.destinationDirectoryPath, state.destinationSubDirectories)
       loadDestinationDirectoryContent()
-    of Key.C:
-      state.filter = ""
-      reload()
-    of Key.D:
-      state.focus = DestinationSelection
-    of Key.Escape, Key.Q:
-      exitProc()
-    of Key.F:
-      state.focus = Filtering
-    of Key.S:
-      state.focus = SourceSelection
-    of Key.Tab:
-      focusNextZone()
     else:
-      discard
+      processGlobalKeyPress(key)
 
 proc updateSourceFilesView() =
     let key = getKey()
@@ -272,15 +265,6 @@ proc updateSourceFilesView() =
       state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
     of Key.Up:
       state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
-    of Key.C:
-      state.filter = ""
-      reload()
-    of Key.D:
-      state.focus = DestinationSelection
-    of Key.Escape, Key.Q:
-      exitProc()
-    of Key.F:
-      state.focus = Filtering
     of Key.M:
       let selectedFile = entry.getSelectedItem(state.filteredSourceFiles)
       if selectedFile.isSome:
@@ -291,46 +275,27 @@ proc updateSourceFilesView() =
       else:
         # TODO display error
         discard
-    of Key.S:
-      state.focus = SourceSelection
     of Key.U:
       if state.commands.len > 0:
         let lastExecutedCommand = state.commands[^1]
         lastExecutedCommand.undo()
         reload()
-    of Key.Tab:
-      focusNextZone()
     else:
-      discard
+      processGlobalKeyPress(key)
 
 proc updateDestinationFilesView() =
-    # TODO see if its possible to factorize with updateSourceFilesView using high order functions
     let key = getKey()
     case key
     of Key.Down:
       state.filteredDestinationFiles = entry.selectNext(state.filteredDestinationFiles)
     of Key.Up:
       state.filteredDestinationFiles = entry.selectPrevious(state.filteredDestinationFiles)
-    of Key.C:
-      state.filter = ""
-      reload()
-    of Key.D:
-      state.focus = DestinationSelection
-    of Key.Escape, Key.Q:
-      exitProc()
-    of Key.F:
-      state.focus = Filtering
-    of Key.S:
-      state.focus = SourceSelection
-    of Key.Tab:
-      focusNextZone()
     else:
-      discard
+      processGlobalKeyPress(key)
 
 
 proc updateFilteringView() =
   let key = getKey()
-
   case key
   of Key.Escape:
     state.focus = SourceSelection
