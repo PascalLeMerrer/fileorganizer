@@ -347,21 +347,6 @@ proc update() =
     updateFilteringView()
     reload()
 
-func formatIndex*(index: int, width: int): string =
-  # formatting string cannot be defined dynamically
-
-  case width
-  of 2:
-    return fmt("{index:>2}")
-  of 3:
-    return fmt("{index:>3}")
-  of 4:
-    return fmt("{index:>4}")
-  of 5:
-    return fmt("{index:>5}")
-  else:
-    return $index
-
 proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
 
@@ -408,7 +393,7 @@ proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int,
     else:
       tb.resetAttributes()
     let selectionSymbol = if fileEntry.selected: rightArrow else: " "
-    var line = selectionSymbol & " " & formatIndex(index + 1,
+    var line = selectionSymbol & " " & strutils.align($(index + 1),
         maxDigitsForIndex) & " " & fileEntry.name
     if line.len > maxWidth:
       line = line[0..maxWidth-1]
