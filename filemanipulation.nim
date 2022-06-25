@@ -27,6 +27,7 @@ import std/options
 const rightArrow = $Rune(0x2192)
 const yLimitBetweenDirAndFiles = 22
 const leftColumnX = 2
+const statusLineHeight = 2 # including the top border
 
 let characters = {
   Key.Space: " ",
@@ -507,7 +508,7 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
 
   # middle vertical separation
   let x = getHalfWidth() + 1
-  bb.drawVertLine(x, leftColumnX, terminalHeight() - 3, doubleStyle = true)
+  bb.drawVertLine(x, leftColumnX, terminalHeight() - statusLineHeight - 1, doubleStyle = true)
 
   # separator between directories and files
   bb.drawHorizLine(x1 = 0, x2 = terminalWidth(), y = yLimitBetweenDirAndFiles, doubleStyle = true)
@@ -516,7 +517,7 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
   bb.drawRect(0, 0, terminalWidth(), 2, doubleStyle = true)
 
   # footer box
-  bb.drawRect(0, terminalHeight() - 3, terminalWidth(), terminalHeight(), doubleStyle = true)
+  bb.drawRect(0, terminalHeight() - statusLineHeight - 1, terminalWidth(), terminalHeight(), doubleStyle = true)
 
   tb.write(bb)
 
@@ -561,9 +562,10 @@ proc render() =
   discard renderDestinationFiles(tb, rightColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
 
   if state.error == "":
-    renderHelp(tb, leftColumnX, tb.height - 2)
+    renderHelp(tb, leftColumnX, tb.height - statusLineHeight)
   else:
     renderError(tb, leftColumnX, tb.height - 2, state.error)
+    renderError(tb, leftColumnX, tb.height - statusLineHeight, state.error)
 
   tb.display()
 
