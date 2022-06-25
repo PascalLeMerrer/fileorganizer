@@ -154,8 +154,8 @@ var state = State(
     error: "",
     filter: "",
     focus: SourceSelection,
-    sourceDirectoryPath: getHomeDir(),
-    destinationDirectoryPath: getHomeDir()
+    sourceDirectoryPath: getCurrentDir(),
+    destinationDirectoryPath: getCurrentDir()
   )
 
 proc getHalfWidth(): int =
