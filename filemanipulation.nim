@@ -1,11 +1,7 @@
 import illwill
 import system
-import std/os
-import std/strformat
-import std/tables
-import std/unicode
+import std/[os, strformat, strutils, unicode, tables, times]
 import modules/[commands, entry, file]
-from std/sugar import dump
 import std/options
 
 # TODO
@@ -181,7 +177,7 @@ proc loadSourceDirectoryContent() =
   state.filteredSourceFiles = selectFirst(filteredFiles)
 
 proc loadDestinationDirectoryContent() =
-  let destinationSubDirectories = file.getSubDirectories(
+  let destinationSubDirectories = file.getSubDirectoriesRecursively(
       state.destinationDirectoryPath)
   state.destinationSubDirectories = filter(destinationSubDirectories, state.filter)
   if not entry.isAnySelected(state.destinationSubDirectories):
@@ -544,6 +540,21 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y:int)=
 proc renderError(tb: var TerminalBuffer, x: int, y:int, msg:string)=
   tb.write(x, y, bgRed, fgWhite, msg)
 
+proc renderState(tb: var TerminalBuffer, x, y:int) =
+  var nextY = y
+  tb.write(x, nextY, $now())
+  inc nextY
+  var debugString = fmt"{state=}"
+  let maxLineLen = terminalWidth() - leftColumnX * 3
+  while debugString.len > maxLineLen:
+    tb.write(x, nextY, debugString[0..maxLineLen])
+    debugString = debugString[maxLineLen+1..^1]
+    inc nextY
+  tb.write(x, nextY, debugString)
+
+
+
+
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
   var bb = newBoxBuffer(tb.width, tb.height)
@@ -564,19 +575,26 @@ proc render() =
   if state.error == "":
     renderHelp(tb, leftColumnX, tb.height - statusLineHeight)
   else:
-    renderError(tb, leftColumnX, tb.height - 2, state.error)
     renderError(tb, leftColumnX, tb.height - statusLineHeight, state.error)
+
+  # renderState(tb, leftColumnX, tb.height - statusLineHeight)
 
   tb.display()
 
 proc main() =
   init()
   while true:
-    update()
-    render()
-    sleep(20)
-
-main()
+    try:
+      update()
+      render()
+      sleep(20)
+    except:
+      let
+        e = getCurrentException()
+        msg = getCurrentExceptionMsg()
+      var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
+      tb.write(1,1, "Got exception ", repr(e), " with message ", msg)
+      tb.display()
 
 when isMainModule:
   main()
