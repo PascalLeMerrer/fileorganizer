@@ -443,7 +443,7 @@ proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int,
   let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  var title = " Source: " & state.sourceDirectoryPath.lastPathPart
+  var title = " Source: " & state.sourceDirectoryPath.lastPathPart & " - " & $state.sourceSubDirectories.len & " directories"
   if title.len > maxWidth:
     title = title[0..maxWidth-3] & "..."
   tb.write(x, nextY, title)
@@ -459,7 +459,9 @@ proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int,
   let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  var title = " Destination: " & state.destinationDirectoryPath.lastPathPart
+  var title = " Destination: " & state.destinationDirectoryPath.lastPathPart & " - " & $state.destinationSubDirectories.len & " directories"
+  if state.destinationSubDirectories.len == file.maxFiles:
+    title.add(" or more")
   if title.len > maxWidth:
     title = title[0..maxWidth-3] & "..."
   tb.write(x, nextY, title)
