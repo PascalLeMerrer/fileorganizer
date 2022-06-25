@@ -194,7 +194,10 @@ proc loadDestinationDirectoryContent() =
 
 proc reload() =
   loadSourceDirectoryContent()
-  loadDestinationDirectoryContent()
+  try:
+    loadDestinationDirectoryContent()
+  except OSError as e:
+    state.error = e.msg
 
 proc focusNextZone() =
   # todo use a map
