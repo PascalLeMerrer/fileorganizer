@@ -46,6 +46,17 @@ func selectFirst*(entries: seq[Entry]): seq[Entry] =
       else:
         result.add(entry)
 
+func selectLast*(entries: seq[Entry]): seq[Entry] =
+  if entries.len == 0:
+    return entries
+  for entry in entries[0..^2]:
+    if entry.selected:
+      result.add(unselect(entry))
+    else:
+      result.add(entry)
+  let lastEntry = select(entries[^1])
+  result.add(lastEntry)
+
 func selectNext*(entries: seq[Entry]): seq[Entry] =
   result = @[]
   var shouldSelectNextEntry = false

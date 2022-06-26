@@ -247,45 +247,47 @@ proc processGlobalKeyPress(key: Key) =
 proc updateSourceDirectoriesView() =
   let key = getKey()
   case key
+  of Key.B: # Bottom
+    state.sourceSubDirectories = entry.selectLast(state.sourceSubDirectories)
   of Key.Down:
     state.sourceSubDirectories = entry.selectNext(state.sourceSubDirectories)
-  of Key.Up:
-    state.sourceSubDirectories = entry.selectPrevious(
-        state.sourceSubDirectories)
   of Key.Enter:
     state.sourceDirectoryPath = file.getSelectedDirectoryPath(
         state.sourceDirectoryPath, state.sourceSubDirectories)
     loadSourceDirectoryContent()
   of Key.T: # Top
     state.sourceSubDirectories = entry.selectFirst(state.sourceSubDirectories)
+  of Key.Up:
+    state.sourceSubDirectories = entry.selectPrevious(
+        state.sourceSubDirectories)
   else:
     processGlobalKeyPress(key)
 
 proc updateDestinationDirectoriesView() =
   let key = getKey()
   case key
+  of Key.B: # Bottom
+    state.destinationSubDirectories = entry.selectLast(state.destinationSubDirectories)
   of Key.Down:
-    state.destinationSubDirectories = entry.selectNext(
-        state.destinationSubDirectories)
-  of Key.Up:
-    state.destinationSubDirectories = entry.selectPrevious(
-        state.destinationSubDirectories)
+    state.destinationSubDirectories = entry.selectNext(state.destinationSubDirectories)
   of Key.Enter:
     state.destinationDirectoryPath = file.getSelectedDirectoryPath(
         state.destinationDirectoryPath, state.destinationSubDirectories)
     loadDestinationDirectoryContent()
   of Key.T: # Top
     state.destinationSubDirectories = entry.selectFirst(state.destinationSubDirectories)
+  of Key.Up:
+    state.destinationSubDirectories = entry.selectPrevious(state.destinationSubDirectories)
   else:
     processGlobalKeyPress(key)
 
 proc updateSourceFilesView() =
   let key = getKey()
   case key
+  of Key.B: # Bottom
+    state.filteredSourceFiles = entry.selectLast(state.filteredSourceFiles)
   of Key.Down:
     state.filteredSourceFiles = entry.selectNext(state.filteredSourceFiles)
-  of Key.Up:
-    state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
   of Key.M:
     let selectedFile = entry.getSelectedItem(state.filteredSourceFiles)
     if selectedFile.isSome:
@@ -298,17 +300,18 @@ proc updateSourceFilesView() =
       state.error = "ERROR: Move command failed because no file is selected."
   of Key.T: # Top
     state.filteredSourceFiles = entry.selectFirst(state.filteredSourceFiles)
+  of Key.Up:
+    state.filteredSourceFiles = entry.selectPrevious(state.filteredSourceFiles)
   else:
     processGlobalKeyPress(key)
 
 proc updateDestinationFilesView() =
   let key = getKey()
   case key
+  of Key.B: # Bottom
+    state.filteredDestinationFiles = entry.selectLast(state.filteredDestinationFiles)
   of Key.Down:
     state.filteredDestinationFiles = entry.selectNext(
-        state.filteredDestinationFiles)
-  of Key.Up:
-    state.filteredDestinationFiles = entry.selectPrevious(
         state.filteredDestinationFiles)
   of Key.M:
     let selectedFile = entry.getSelectedItem(state.filteredDestinationFiles)
@@ -322,7 +325,8 @@ proc updateDestinationFilesView() =
       state.error = "ERROR: Move command failed because no file is selected."
   of Key.T: # Top
     state.filteredDestinationFiles = entry.selectFirst(state.filteredDestinationFiles)
-
+  of Key.Up:
+    state.filteredDestinationFiles = entry.selectPrevious(state.filteredDestinationFiles)
   else:
     processGlobalKeyPress(key)
 
@@ -539,6 +543,7 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y: int) =
       bgWhite, fgBlack, "F", resetStyle, " edit filter ",
       bgWhite, fgBlack, "C", resetStyle, " clear filter ",
       bgWhite, fgBlack, "T", resetStyle, " top ",
+      bgWhite, fgBlack, "B", resetStyle, " bottom ",
       bgWhite, fgBlack, "Q", resetStyle, " quit ",
       )
   of DestinationFileSelection, SourceFileSelection:
@@ -548,6 +553,7 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y: int) =
       bgWhite, fgBlack, "M", resetStyle, " move selected file ",
       bgWhite, fgBlack, "C", resetStyle, " clear filter ",
       bgWhite, fgBlack, "T", resetStyle, " top ",
+      bgWhite, fgBlack, "B", resetStyle, " bottom ",
       bgWhite, fgBlack, "Q", resetStyle, " quit ",
       )
   of Filtering:

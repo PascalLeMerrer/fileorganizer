@@ -39,6 +39,16 @@ suite "Entry selection":
     let expected : seq[Entry] = @[e("a", selected=true), e("b"), e("c"), e("d")]
     check(entry.selectFirst(entries) == expected)
 
+  test "Last entry in a sequence may be selected when no other is selected":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c"), e("d")]
+    let expected : seq[Entry] = @[e("a"), e("b"), e("c"), e("d", selected=true)]
+    check(entry.selectLast(entries) == expected)
+
+  test "When selecting the last entry in a sequence, the others are unselected":
+    let entries : seq[Entry] = @[e("a"), e("b"), e("c", selected=true), e("d")]
+    let expected : seq[Entry] = @[e("a"), e("b"), e("c"), e("d", selected=true)]
+    check(entry.selectLast(entries) == expected)
+
   test "getSelectedItemIndex returns the position of the first selected entry in the sequence":
     let entries : seq[Entry] = @[e("a"), e("b"), e("c", selected=true), e("d")]
     check(entry.getSelectedItemIndex(entries) == 2)
