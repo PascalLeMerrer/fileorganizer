@@ -88,33 +88,15 @@ func reverse*(entries: seq[Entry]): seq[Entry] =
 func selectPrevious*(entries: seq[Entry]): seq[Entry] =
   reverse(selectNext(reverse(entries)))
 
-func containsLetters(text: string, lettersToSearch: string): bool =
-  let lowercaseText = toLower(text)
-  let lowercaseLettersToSearch = toLower(lettersToSearch)
-  if lowercaseLettersToSearch.len == 0:
-    return true
-
-  let letterToSearch = $runeAtPos(lowercaseLettersToSearch, 0)
-  let index = strutils.find(lowercaseText, letterToSearch)
-  if index < 0:
-    return false
-
-  if lowercaseLettersToSearch.len > 1:
-    let remainingLetters = runeSubStr(lowercaseLettersToSearch, 1)
-    let remainingText = runeSubStr(lowercaseText, index + 1)
-    return containsLetters(remainingText, remainingLetters)
-
-  return true
-
 proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
   result = @[]
 
-  # ignore diacritics; For example, é and è and transformed to e
-  let asciiLettersToSearch = unidecode(lettersToSearch)
+  # ignore diacritics; For example, é and è are transformed to e
+  let wordsToSearch =  strutils.split(unidecode(lettersToSearch).toLower)
 
   for entry in entries:
-    let asciiFilename = unidecode(entry.name)
-    if containsLetters(asciiFilename, asciiLettersToSearch):
+    let name = entry.name.toLower
+    if sequtils.all(wordsToSearch, func (word: string): bool = name.contains(word)):
       result.add(entry)
 
 
