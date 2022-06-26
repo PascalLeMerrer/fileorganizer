@@ -30,14 +30,16 @@ proc getFiles*(directoryPath: string): seq[Entry] =
 proc getSubDirectories*(directoryPath: string): seq[Entry] =
   result = @[Entry(path: ParDir, name: ParDir, selected: true)]
   for kind, path in os.walkDir(directoryPath):
-    let filename = splitPath(path).tail
-    if filename.startsWith('.'):
+    # ignore hidden subdirectories
+    let pathParts = path.split(os.AltSep)
+    if sequtils.any(pathParts, func (dirName: string): bool = return dirName.startsWith('.')):
       continue
+    let dirName = splitPath(path).tail
     case kind:
     of pcDir:
       let entry = Entry(
         path: path,
-        name: unidecode(filename), # Illwill does not support non ASCII chars
+        name: unidecode(dirName), # Illwill does not support non ASCII chars
         selected: false
       )
       result.add(entry)
