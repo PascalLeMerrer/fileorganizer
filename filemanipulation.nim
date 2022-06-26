@@ -604,7 +604,10 @@ proc main() =
     try:
       update()
       render()
-      sleep(20)
+      if state.focus == Filtering:
+        sleep(10) # improves reactivity to key presses
+      else:
+        sleep(20)
     except:
       let
         e = getCurrentException()
