@@ -51,7 +51,8 @@ proc getSubDirectoriesRecursively*(destinationDirectoryPath: string): seq[Entry]
   let rootPathLen = destinationDirectoryPath.len
 
   result = @[Entry(path: ParDir, name: ParDir, selected: true)]
-  for dirPath in os.walkDirRec(dir=destinationDirectoryPath, yieldFilter={pcDir}, checkDir=true):
+  for dirPath in os.walkDirRec(dir = destinationDirectoryPath, yieldFilter = {
+      pcDir}, checkDir = true):
     # ignore hidden subdirectories
     let pathParts = dirPath.split(os.AltSep)
     if sequtils.any(pathParts, func (dirName: string): bool = return dirName.startsWith('.')):

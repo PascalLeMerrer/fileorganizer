@@ -141,7 +141,7 @@ type
     filter: string
     filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
-    focus: FocusZone            # the part of the screen with the focus
+    focus: FocusZone       # the part of the screen with the focus
     sourceDirectoryPath: string
     destinationDirectoryPath: string
     destinationSubDirectories: seq[Entry] # the directories into the current destination directory
@@ -440,7 +440,8 @@ proc renderSourceDirectories(tb: var TerminalBuffer, x: int, y: int,
   let bgColor = if state.focus == SourceSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  var title = " Source: " & state.sourceDirectoryPath.lastPathPart & " - " & $state.sourceSubDirectories.len & " directories"
+  var title = " Source: " & state.sourceDirectoryPath.lastPathPart & " - " &
+      $state.sourceSubDirectories.len & " directories"
   if title.len > maxWidth:
     title = title[0..maxWidth-3] & "..."
   tb.write(x, nextY, title)
@@ -456,7 +457,8 @@ proc renderDestinationDirectories(tb: var TerminalBuffer, x: int, y: int,
   let bgColor = if state.focus == DestinationSelection: BackgroundColor.bgGreen else: BackgroundColor.bgWhite
   tb.setBackgroundColor(bgColor)
   tb.setForegroundColor(ForegroundColor.fgBlack)
-  var title = " Destination: " & state.destinationDirectoryPath.lastPathPart & " - " & $state.destinationSubDirectories.len & " directories"
+  var title = " Destination: " & state.destinationDirectoryPath.lastPathPart &
+      " - " & $state.destinationSubDirectories.len & " directories"
   if state.destinationSubDirectories.len == file.maxFiles:
     title.add(" or more")
   if title.len > maxWidth:
@@ -504,20 +506,23 @@ proc renderGrid(tb: var TerminalBuffer, bb: var BoxBuffer) =
 
   # middle vertical separation
   let x = getHalfWidth() + 1
-  bb.drawVertLine(x, leftColumnX, terminalHeight() - statusLineHeight - 1, doubleStyle = true)
+  bb.drawVertLine(x, leftColumnX, terminalHeight() - statusLineHeight - 1,
+      doubleStyle = true)
 
   # separator between directories and files
-  bb.drawHorizLine(x1 = 0, x2 = terminalWidth(), y = yLimitBetweenDirAndFiles, doubleStyle = true)
+  bb.drawHorizLine(x1 = 0, x2 = terminalWidth(), y = yLimitBetweenDirAndFiles,
+      doubleStyle = true)
 
   # filter input box
   bb.drawRect(0, 0, terminalWidth(), 2, doubleStyle = true)
 
   # footer box
-  bb.drawRect(0, terminalHeight() - statusLineHeight - 1, terminalWidth(), terminalHeight(), doubleStyle = true)
+  bb.drawRect(0, terminalHeight() - statusLineHeight - 1, terminalWidth(),
+      terminalHeight(), doubleStyle = true)
 
   tb.write(bb)
 
-proc renderHelp(tb: var TerminalBuffer, x: int, y:int)=
+proc renderHelp(tb: var TerminalBuffer, x: int, y: int) =
   case state.focus
   of DestinationSelection, SourceSelection:
     tb.write(x, y,
@@ -537,10 +542,10 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y:int)=
   of Filtering:
     tb.write(x, y, "Press ", bgWhite, fgBlack, "Esc", resetStyle, " to exit filter edition")
 
-proc renderError(tb: var TerminalBuffer, x: int, y:int, msg:string)=
+proc renderError(tb: var TerminalBuffer, x: int, y: int, msg: string) =
   tb.write(x, y, bgRed, fgWhite, msg)
 
-proc renderState(tb: var TerminalBuffer, x, y:int) =
+proc renderState(tb: var TerminalBuffer, x, y: int) =
   var nextY = y
   tb.write(x, nextY, $now())
   inc nextY
@@ -593,7 +598,7 @@ proc main() =
         e = getCurrentException()
         msg = getCurrentExceptionMsg()
       var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-      tb.write(1,1, "Got exception ", repr(e), " with message ", msg)
+      tb.write(1, 1, "Got exception ", repr(e), " with message ", msg)
       tb.display()
 
 when isMainModule:
