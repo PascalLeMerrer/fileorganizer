@@ -38,9 +38,13 @@ func selectFirst*(entries: seq[Entry]): seq[Entry] =
   if entries.len == 0:
     return entries
   let firstEntry = select(entries[0])
-  if entries.len == 1:
-    return @[firstEntry]
-  return concat(@[firstEntry], entries[1..^1])
+  result = @[firstEntry]
+  if entries.len > 1 :
+    for entry in entries[1..^1]:
+      if entry.selected:
+        result.add(unselect(entry))
+      else:
+        result.add(entry)
 
 func selectNext*(entries: seq[Entry]): seq[Entry] =
   result = @[]
