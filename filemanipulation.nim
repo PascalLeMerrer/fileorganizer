@@ -5,8 +5,6 @@ import modules/[commands, entry, file]
 import std/options
 
 # TODO
-# CTRL+UP to go to the first item
-# CTRL+DOWN to go to the last item
 # Integrated Help (H)
 # Delete file
 # highlight moved files in dest dir
@@ -612,7 +610,8 @@ proc main() =
         e = getCurrentException()
         msg = getCurrentExceptionMsg()
       var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-      tb.write(1, 1, "Got exception ", repr(e), " with message ", msg)
+      let errorMessage = msg.replace(sub='\n', by=' ')
+      renderError(tb, leftColumnX, tb.height - statusLineHeight, errorMessage)
       tb.display()
 
 when isMainModule:
