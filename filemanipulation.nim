@@ -256,6 +256,8 @@ proc updateSourceDirectoriesView() =
     state.sourceDirectoryPath = file.getSelectedDirectoryPath(
         state.sourceDirectoryPath, state.sourceSubDirectories)
     loadSourceDirectoryContent()
+  of Key.T: # Top
+    state.sourceSubDirectories = entry.selectFirst(state.sourceSubDirectories)
   else:
     processGlobalKeyPress(key)
 
@@ -272,6 +274,8 @@ proc updateDestinationDirectoriesView() =
     state.destinationDirectoryPath = file.getSelectedDirectoryPath(
         state.destinationDirectoryPath, state.destinationSubDirectories)
     loadDestinationDirectoryContent()
+  of Key.T: # Top
+    state.destinationSubDirectories = entry.selectFirst(state.destinationSubDirectories)
   else:
     processGlobalKeyPress(key)
 
@@ -292,6 +296,8 @@ proc updateSourceFilesView() =
       reload()
     else:
       state.error = "ERROR: Move command failed because no file is selected."
+  of Key.T: # Top
+    state.filteredSourceFiles = entry.selectFirst(state.filteredSourceFiles)
   else:
     processGlobalKeyPress(key)
 
@@ -314,6 +320,9 @@ proc updateDestinationFilesView() =
       reload()
     else:
       state.error = "ERROR: Move command failed because no file is selected."
+  of Key.T: # Top
+    state.filteredDestinationFiles = entry.selectFirst(state.filteredDestinationFiles)
+
   else:
     processGlobalKeyPress(key)
 
@@ -529,6 +538,7 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y: int) =
       bgWhite, fgBlack, "TAB", resetStyle, " focus next zone ",
       bgWhite, fgBlack, "F", resetStyle, " edit filter ",
       bgWhite, fgBlack, "C", resetStyle, " clear filter ",
+      bgWhite, fgBlack, "T", resetStyle, " top ",
       bgWhite, fgBlack, "Q", resetStyle, " quit ",
       )
   of DestinationFileSelection, SourceFileSelection:
@@ -537,6 +547,7 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y: int) =
       bgWhite, fgBlack, "F", resetStyle, " edit filter ",
       bgWhite, fgBlack, "M", resetStyle, " move selected file ",
       bgWhite, fgBlack, "C", resetStyle, " clear filter ",
+      bgWhite, fgBlack, "T", resetStyle, " top ",
       bgWhite, fgBlack, "Q", resetStyle, " quit ",
       )
   of Filtering:
@@ -556,9 +567,6 @@ proc renderState(tb: var TerminalBuffer, x, y: int) =
     debugString = debugString[maxLineLen+1..^1]
     inc nextY
   tb.write(x, nextY, debugString)
-
-
-
 
 proc render() =
   var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
