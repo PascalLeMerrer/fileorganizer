@@ -23,7 +23,7 @@ const yLimitBetweenDirAndFiles = 22
 const leftColumnX = 2
 const statusLineHeight = 2 # including the top border
 
-let characters = {
+let supportedCharacters = {
   Key.Space: " ",
   Key.ExclamationMark: "!",
   Key.DoubleQuote: "\"",
@@ -340,8 +340,8 @@ proc updateFilteringView() =
   of Key.Tab:
     focusNextZone()
   else:
-    if key in characters:
-      state.filter.add(characters[key])
+    if key in supportedCharacters:
+      state.filter.add(supportedCharacters[key])
 
 
 proc update() =
