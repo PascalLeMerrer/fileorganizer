@@ -49,28 +49,21 @@ proc getSubDirectories*(directoryPath: string): seq[Entry] =
     return entry.cmp(x, y)
 
 # Returns the list of directories in the current one, plus the link to the parent (..)
-proc getSubDirectoriesRecursively*(destinationDirectoryPath: string): seq[Entry] =
-  let rootPathLen = destinationDirectoryPath.len
-
-  result = @[Entry(path: ParDir, name: ParDir, selected: true)]
-  for dirPath in os.walkDirRec(dir = destinationDirectoryPath, yieldFilter = {
-      pcDir}, checkDir = true):
-    # ignore hidden subdirectories
-    let pathParts = dirPath.split(os.AltSep)
-    if sequtils.any(pathParts, func (dirName: string): bool = return dirName.startsWith('.')):
+proc getSubDirectoriesRecursively*(rootPath: string, destinationDirectoryPath: string, subDirectories: var seq[Entry]) =
+  let rootPathLen = rootPath.len
+  for kind, path in os.walkDir(dir = destinationDirectoryPath, checkDir = true):
+    if os.isHidden(path) or kind != pcDir:
       continue
-    let relativePath = dirPath[rootPathLen..^1]
+    let relativePath = path[(rootPathLen + 1)..^1]
     let entry = Entry(
-      path: dirPath,
+      path: path,
       name: unidecode(relativePath), # Illwill does not support non ASCII chars
       selected: false
     )
-    result.add(entry)
-    if result.len >= maxFiles:
+    subDirectories.add(entry)
+    if subDirectories.len >= maxFiles:
       break
-  result.sort do (x, y: Entry) -> int:
-    return entry.cmp(x, y)
-
+    getSubDirectoriesRecursively(rootPath, path, subDirectories)
 
 proc getSelectedDirectoryPath*(currentDirectoryPath: string,
     subDirectories: seq[Entry]): string =

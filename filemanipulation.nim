@@ -175,11 +175,13 @@ proc loadSourceDirectoryContent() =
   state.filteredSourceFiles = selectFirst(filteredFiles)
 
 proc loadDestinationDirectoryContent() =
-  let destinationSubDirectories = file.getSubDirectoriesRecursively(
-      state.destinationDirectoryPath)
+  var destinationSubDirectories = @[Entry(path: ParDir, name: ParDir, selected: true)]
+  file.getSubDirectoriesRecursively( state.destinationDirectoryPath, state.destinationDirectoryPath, destinationSubDirectories)
+  # destinationSubDirectories.sort do (x, y: Entry) -> int:
+  #   return entry.cmp(x, y)
   state.destinationSubDirectories = filter(destinationSubDirectories, state.filter)
   if not entry.isAnySelected(state.destinationSubDirectories):
-    # the previously selected entry is excluded of selection
+    # the previously selected entry is excluded of selection, so we need a new one
     state.destinationSubDirectories = entry.selectFirst(
         state.destinationSubDirectories)
 
