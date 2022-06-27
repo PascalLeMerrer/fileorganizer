@@ -1,10 +1,6 @@
-import std/os
-import std/strutils
-import std/unidecode
-import ./entry
+import std/[os, sequtils, strutils, unidecode]
 from std/algorithm import sort
-from std/sugar import dump
-import std/sequtils
+import ./entry
 
 const maxFiles* = 5000
 

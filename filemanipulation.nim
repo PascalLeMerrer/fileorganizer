@@ -129,6 +129,7 @@ type FocusZone = enum
   DestinationFileSelection
   DestinationSelection,
   Filtering,
+  Renaming,
   SourceFileSelection
   SourceSelection,
 
