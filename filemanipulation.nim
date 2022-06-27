@@ -1,12 +1,17 @@
 import illwill
 import system
-import std/[os, strformat, strutils, unicode, tables, times]
+import std/[algorithm, os, strformat, strutils, unicode, tables, times]
 import modules/[commands, entry, file]
 import std/options
 
+# FIXME
+# do not include .. in dir count
+# do not display .. when the current dir is root
+# cannot undo multiple actions
 # TODO
-# Integrated Help (H)
+# Rename files
 # Delete file
+# Integrated Help (H)
 # highlight moved files in dest dir
 # select file by number
 # scrollbar
@@ -14,7 +19,6 @@ import std/options
 # O for opening file
 # Display file size
 # Display last modification date of files
-# Rename files
 # Move all command (A)
 # undo command which modified multiple files
 
@@ -176,9 +180,8 @@ proc loadSourceDirectoryContent() =
 
 proc loadDestinationDirectoryContent() =
   var destinationSubDirectories = @[Entry(path: ParDir, name: ParDir, selected: true)]
-  file.getSubDirectoriesRecursively( state.destinationDirectoryPath, state.destinationDirectoryPath, destinationSubDirectories)
-  # destinationSubDirectories.sort do (x, y: Entry) -> int:
-  #   return entry.cmp(x, y)
+  file.getSubDirectoriesRecursively(state.destinationDirectoryPath, state.destinationDirectoryPath, destinationSubDirectories)
+  destinationSubDirectories.sort(entry.cmp)
   state.destinationSubDirectories = filter(destinationSubDirectories, state.filter)
   if not entry.isAnySelected(state.destinationSubDirectories):
     # the previously selected entry is excluded of selection, so we need a new one

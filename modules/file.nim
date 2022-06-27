@@ -72,6 +72,7 @@ proc getSelectedDirectoryPath*(currentDirectoryPath: string,
       case entry.name
       of ParDir:
         let (parent, current) = splitPath(currentDirectoryPath)
+        discard current
         return parent
       else:
         return entry.path

@@ -1,9 +1,4 @@
-import std/options
-import std/os
-import std/sequtils
-import std/strutils
-import std/unicode
-import std/unidecode
+import std/[options, os, sequtils, strutils, unicode, unidecode]
 
 type
   Entry* = object
@@ -107,4 +102,4 @@ func cmp*(x: Entry, y: Entry): int =
     return -1
   if y.path == os.ParDir:
     return 1
-  return cmp(x.name.toLower, y.name.toLower)
+  return system.cmp(x.name.toLower, y.name.toLower)
