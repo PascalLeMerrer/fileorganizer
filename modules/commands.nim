@@ -16,3 +16,12 @@ method execute(this: MoveCommand) =
 method undo(this: MoveCommand) =
   let currentPath = this.directory & os.DirSep & this.file.name
   os.moveFile(currentPath, this.file.path)
+
+type RenameCommand* = ref object of Command
+  newName*: string
+method execute(this: RenameCommand) =
+  let destinationPath = this.directory & os.DirSep & this.newName
+  os.moveFile(this.file.path, destinationPath)
+method undo(this: RenameCommand) =
+  let currentPath = this.directory & os.DirSep & this.newName
+  os.moveFile(currentPath, this.file.path)

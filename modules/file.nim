@@ -45,7 +45,8 @@ proc getSubDirectories*(directoryPath: string): seq[Entry] =
     return entry.cmp(x, y)
 
 # Returns the list of directories in the current one, plus the link to the parent (..)
-proc getSubDirectoriesRecursively*(rootPath: string, destinationDirectoryPath: string, subDirectories: var seq[Entry]) =
+proc getSubDirectoriesRecursively*(rootPath: string,
+    destinationDirectoryPath: string, subDirectories: var seq[Entry]) =
   let rootPathLen = rootPath.len
   for kind, path in os.walkDir(dir = destinationDirectoryPath, checkDir = true):
     if os.isHidden(path) or kind != pcDir:

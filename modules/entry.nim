@@ -34,7 +34,7 @@ func selectFirst*(entries: seq[Entry]): seq[Entry] =
     return entries
   let firstEntry = select(entries[0])
   result = @[firstEntry]
-  if entries.len > 1 :
+  if entries.len > 1:
     for entry in entries[1..^1]:
       if entry.selected:
         result.add(unselect(entry))
@@ -87,7 +87,7 @@ proc filter*(entries: seq[Entry], lettersToSearch: string): seq[Entry] =
   result = @[]
 
   # ignore diacritics; For example, é and è are transformed to e
-  let wordsToSearch =  strutils.split(unidecode(lettersToSearch).toLower)
+  let wordsToSearch = strutils.split(unidecode(lettersToSearch).toLower)
 
   for entry in entries:
     let name = entry.name.toLower

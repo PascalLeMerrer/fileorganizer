@@ -1,6 +1,6 @@
 import illwill
 import system
-import std/[algorithm, os, strformat, strutils, unicode, tables, times]
+import std/[algorithm, os, strformat, strutils, unicode, tables]
 import modules/[commands, entry, file]
 import std/options
 
@@ -11,6 +11,7 @@ import std/options
 # TODO
 # Rename files
 # Delete file
+# Search and replace
 # Integrated Help (H)
 # highlight moved files in dest dir
 # select file by number
@@ -140,17 +141,20 @@ type
 type
   State = object
     commands: seq[Command] # the last command, which may by canceled
+    editedFilename: string
     error: string
     filter: string
     filteredSourceFiles: seq[Entry] # the files in the current source dir matching the current filter
     sourceSubDirectories: seq[Entry] # the directories into the current source directory
     focus: FocusZone       # the part of the screen with the focus
+    previousFocusZone: FocusZone
     sourceDirectoryPath: string
     destinationDirectoryPath: string
     destinationSubDirectories: seq[Entry] # the directories into the current destination directory
     filteredDestinationFiles: seq[Entry] # the files in the current destination dir matching the current filter
 
 var state = State(
+    editedFilename: "",
     error: "",
     filter: "",
     focus: SourceSelection,
@@ -180,8 +184,10 @@ proc loadSourceDirectoryContent() =
   state.filteredSourceFiles = selectFirst(filteredFiles)
 
 proc loadDestinationDirectoryContent() =
-  var destinationSubDirectories = @[Entry(path: ParDir, name: ParDir, selected: true)]
-  file.getSubDirectoriesRecursively(state.destinationDirectoryPath, state.destinationDirectoryPath, destinationSubDirectories)
+  var destinationSubDirectories = @[Entry(path: ParDir, name: ParDir,
+      selected: true)]
+  file.getSubDirectoriesRecursively(state.destinationDirectoryPath,
+      state.destinationDirectoryPath, destinationSubDirectories)
   destinationSubDirectories.sort(entry.cmp)
   state.destinationSubDirectories = filter(destinationSubDirectories, state.filter)
   if not entry.isAnySelected(state.destinationSubDirectories):
@@ -201,7 +207,6 @@ proc reload() =
     state.error = e.msg
 
 proc focusNextZone() =
-  # todo use a map
   case state.focus
   of SourceSelection:
     state.focus = DestinationSelection
@@ -213,6 +218,9 @@ proc focusNextZone() =
     state.focus = Filtering
   of Filtering:
     state.focus = SourceSelection
+  of Renaming:
+    discard
+
 
 proc init() =
   illwillInit(fullscreen = true)
@@ -271,17 +279,21 @@ proc updateDestinationDirectoriesView() =
   let key = getKey()
   case key
   of Key.B: # Bottom
-    state.destinationSubDirectories = entry.selectLast(state.destinationSubDirectories)
+    state.destinationSubDirectories = entry.selectLast(
+        state.destinationSubDirectories)
   of Key.Down:
-    state.destinationSubDirectories = entry.selectNext(state.destinationSubDirectories)
+    state.destinationSubDirectories = entry.selectNext(
+        state.destinationSubDirectories)
   of Key.Enter:
     state.destinationDirectoryPath = file.getSelectedDirectoryPath(
         state.destinationDirectoryPath, state.destinationSubDirectories)
     loadDestinationDirectoryContent()
   of Key.T: # Top
-    state.destinationSubDirectories = entry.selectFirst(state.destinationSubDirectories)
+    state.destinationSubDirectories = entry.selectFirst(
+        state.destinationSubDirectories)
   of Key.Up:
-    state.destinationSubDirectories = entry.selectPrevious(state.destinationSubDirectories)
+    state.destinationSubDirectories = entry.selectPrevious(
+        state.destinationSubDirectories)
   else:
     processGlobalKeyPress(key)
 
@@ -302,6 +314,17 @@ proc updateSourceFilesView() =
       reload()
     else:
       state.error = "ERROR: Move command failed because no file is selected."
+  of Key.R: # rename
+    let maybeSelectedEntry: Option[Entry] = entry.getSelectedItem(
+        state.filteredSourceFiles)
+    if maybeSelectedEntry.isNone:
+      return
+    let selectedEntry = maybeSelectedEntry.get()
+    if selectedEntry.name == ParDir:
+      return
+    state.previousFocusZone = SourceFileSelection
+    state.focus = Renaming
+    state.editedFilename = selectedEntry.name
   of Key.T: # Top
     state.filteredSourceFiles = entry.selectFirst(state.filteredSourceFiles)
   of Key.Up:
@@ -313,7 +336,8 @@ proc updateDestinationFilesView() =
   let key = getKey()
   case key
   of Key.B: # Bottom
-    state.filteredDestinationFiles = entry.selectLast(state.filteredDestinationFiles)
+    state.filteredDestinationFiles = entry.selectLast(
+        state.filteredDestinationFiles)
   of Key.Down:
     state.filteredDestinationFiles = entry.selectNext(
         state.filteredDestinationFiles)
@@ -328,12 +352,13 @@ proc updateDestinationFilesView() =
     else:
       state.error = "ERROR: Move command failed because no file is selected."
   of Key.T: # Top
-    state.filteredDestinationFiles = entry.selectFirst(state.filteredDestinationFiles)
+    state.filteredDestinationFiles = entry.selectFirst(
+        state.filteredDestinationFiles)
   of Key.Up:
-    state.filteredDestinationFiles = entry.selectPrevious(state.filteredDestinationFiles)
+    state.filteredDestinationFiles = entry.selectPrevious(
+        state.filteredDestinationFiles)
   else:
     processGlobalKeyPress(key)
-
 
 proc updateFilteringView() =
   let key = getKey()
@@ -349,6 +374,27 @@ proc updateFilteringView() =
     if key in supportedCharacters:
       state.filter.add(supportedCharacters[key])
 
+proc updateRenamingView() =
+  let key = getKey()
+  case key
+  of Key.Escape:
+    state.focus = state.previousFocusZone
+  of Key.Backspace:
+    if state.editedFilename.len > 0:
+      state.editedFilename = state.editedFilename[0 .. ^2]
+  of Key.Enter:
+    if state.editedFilename.len > 0:
+      let selectedFile = entry.getSelectedItem(state.filteredSourceFiles)
+      let command = RenameCommand(file: selectedFile.get(),
+          directory: state.sourceDirectoryPath, newName: state.editedFilename)
+      command.execute()
+      state.commands.add(command)
+      reload()
+      state.focus = state.previousFocusZone
+  else:
+    if key in supportedCharacters:
+      state.editedFilename.add(supportedCharacters[key])
+
 
 proc update() =
   case state.focus
@@ -362,7 +408,13 @@ proc update() =
     updateDestinationFilesView()
   of Filtering:
     updateFilteringView()
-    reload()
+  of Renaming:
+    updateRenamingView()
+
+proc renderCursor(tb: var TerminalBuffer, x, y: int) =
+  tb.setForegroundColor(ForegroundColor.fgRed)
+  tb.write(x, y, styleBlink, "|", resetStyle)
+  tb.resetAttributes()
 
 proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
   var nextY = y
@@ -377,14 +429,20 @@ proc renderFilter(tb: var TerminalBuffer, x: int, y: int, maxWidth: int): int =
 
   tb.write(x + 1, nextY, " Filter ")
   tb.resetAttributes()
-  tb.write(x+10, nextY, filter)
+  tb.write(x + 10, nextY, filter)
   if state.focus == Filtering:
-    tb.setForegroundColor(ForegroundColor.fgRed)
-    tb.write(x + 10 + filter.len, nextY, "|")
-    tb.resetAttributes()
+    tb.renderCursor(x + 10 + filter.len, nextY)
   inc nextY
   inc nextY
   return nextY
+
+proc renderEdition(tb: var TerminalBuffer, x, y, maxWidth: int) =
+  let line = strutils.alignLeft(state.editedFilename, maxWidth)
+  tb.write(x, y, bgWhite, fgBlack, line, resetStyle)
+  # TODO fix cursor position
+  tb.renderCursor(x + state.editedFilename.len, y)
+  # tb.setCursorPos(Natural(x + state.editedFilename.len), Natural(y))
+  # showCursor()
 
 proc renderFiles(tb: var TerminalBuffer, entries: seq[Entry], x: int, y: int,
     maxWidth: int, maxY: int): int =
@@ -562,14 +620,15 @@ proc renderHelp(tb: var TerminalBuffer, x: int, y: int) =
       )
   of Filtering:
     tb.write(x, y, "Press ", bgWhite, fgBlack, "Esc", resetStyle, " to exit filter edition")
+  of Renaming:
+    tb.write(x, y, bgWhite, fgBlack, "Enter", resetStyle, " validate ", bgWhite,
+        fgBlack, "Esc", resetStyle, " cancel ")
 
 proc renderError(tb: var TerminalBuffer, x: int, y: int, msg: string) =
   tb.write(x, y, bgRed, fgWhite, msg)
 
 proc renderState(tb: var TerminalBuffer, x, y: int) =
   var nextY = y
-  tb.write(x, nextY, $now())
-  inc nextY
   var debugString = fmt"{state=}"
   let maxLineLen = terminalWidth() - leftColumnX * 3
   while debugString.len > maxLineLen:
@@ -595,6 +654,14 @@ proc render() =
   discard renderSourceFiles(tb, leftColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
   discard renderDestinationFiles(tb, rightColumnX, yLimitBetweenDirAndFiles + 1, maxWidth)
 
+  if state.focus == Renaming:
+    let x = if state.previousFocusZone ==
+        SourceFileSelection: leftColumnX else: rightColumnX
+    let y = yLimitBetweenDirAndFiles + entry.getSelectedItemIndex(
+        state.filteredSourceFiles) + 2
+    renderEdition(tb, x + 4, y, maxWidth -
+        4) # FIXME 4 should be the width of the index column
+
   if state.error == "":
     renderHelp(tb, leftColumnX, tb.height - statusLineHeight)
   else:
@@ -619,7 +686,7 @@ proc main() =
         e = getCurrentException()
         msg = getCurrentExceptionMsg()
       var tb = newTerminalBuffer(terminalWidth(), terminalHeight())
-      let errorMessage = msg.replace(sub='\n', by=' ')
+      let errorMessage = msg.replace(sub = '\n', by = ' ')
       renderError(tb, leftColumnX, tb.height - statusLineHeight, errorMessage)
       tb.display()
 
